@@ -1,0 +1,28 @@
+
+services:
+ 
+  backend:
+    build: ./PLPBackend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydatabase
+    depends_on:
+      - db
+
+  frontend:
+    build: ./plpfrontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: fquinaou
+      POSTGRES_PASSWORD: C0ntr4s3n4
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
