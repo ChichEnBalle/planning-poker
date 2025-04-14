@@ -3,6 +3,8 @@ package put.com.PLPBackend.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "votes")
+
 public class Vote {
 
     @Id
