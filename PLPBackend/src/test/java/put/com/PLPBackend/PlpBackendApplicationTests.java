@@ -7,6 +7,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @Disabled("Disabled for now, as it is not needed")
 
+@Disabled("chut")
 @SpringBootTest
 class PlpBackendApplicationTests {
 
