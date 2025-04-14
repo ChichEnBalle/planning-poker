@@ -29,9 +29,28 @@
 	// This variable will hold the selected card's value
     let selectedCard: { id: number; value: string } | null = null;
 
-    function selectCard(card: { id: number; value: string }) {
-        selectedCard = card;
-    }
+    async function selectCard(card: { id: number; value: string }) {
+	selectedCard = card;
+
+	try {
+		const res = await fetch('http://localhost:8080/api/votes', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				userId: 1,       // à adapter plus tard
+				storyId: 42,     // à adapter plus tard
+				value: card.value
+			})
+		});
+		if (!res.ok) throw new Error("Erreur lors de l'envoi du vote");
+		console.log('Vote enregistré !');
+	} catch (err) {
+		console.error(err);
+	}
+}
+
 </script>
 
 <h1>{message}</h1>
