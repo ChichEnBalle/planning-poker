@@ -2,7 +2,7 @@
 	let message = "Chargement...";
   
 	async function fetchMessage() {
-		const res = await fetch("http://backend:8080/api/hello");
+		const res = await fetch("http://localhost:8080/api/hello");
 		message = await res.text();
 	}
   
