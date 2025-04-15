@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { fade } from 'svelte/transition';
 	import Card from '../components/Card.svelte';
 	import { onMount } from 'svelte';
 
 	let message = "Chargement...";
+
+	let warningMessage: string | null = null;
+
 
 	onMount(async () => {
 		const res = await fetch("http://localhost:8080/api/hello");
@@ -27,7 +31,14 @@
 	let selectedCard: { id: number; value: string } | null = null;
 
 	async function selectCard(card: { id: number; value: string }) {
+		if (selectedCard) {
+			warningMessage = "You have already selected a card. Unselect it before choosing another one.";
+			setTimeout(() => (warningMessage = null), 3000);
+			return;
+		}
 		selectedCard = card;
+		
+
 
 		try {
 			const res = await fetch('http://localhost:8080/api/votes', {
@@ -79,6 +90,10 @@
 		<p>You selected: {selectedCard.value}</p>
 		<button on:click={deselectCard}>Unselect</button>
 	{/if}
+	{#if warningMessage}
+		<p class="warning" transition:fade>{ warningMessage }</p>
+	{/if}
+
 </div>
 
 <style>
@@ -109,4 +124,10 @@
 	button:hover {
 		background-color: #a60000;
 	}
+	.warning {
+		color: #d9534f;
+		font-weight: bold;
+		margin-bottom: 1rem;
+	}
+
 </style>
