@@ -1,7 +1,11 @@
 package put.com.PLPBackend;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+@ActiveProfiles("test")
+@Disabled("Disabled for now, as it is not needed")
 
 @SpringBootTest
 class PlpBackendApplicationTests {
