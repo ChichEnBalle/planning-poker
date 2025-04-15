@@ -7,6 +7,17 @@
 
 	let warningMessage: string | null = null;
 
+	let allVotes: { userId: number; value: string }[] = [];
+	let userId: number = 1;
+
+
+	onMount(() => {
+		const interval = setInterval(fetchVotes, 2000); // toutes les 2 secondes
+		fetchVotes(); // appel initial
+		return () => clearInterval(interval);
+	});
+
+
 
 	onMount(async () => {
 		const res = await fetch("http://localhost:8080/api/hello");
@@ -47,7 +58,7 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					userId: 1,       // à adapter dynamiquement plus tard
+					userId: userId,       // à adapter dynamiquement plus tard
 					storyId: 42,     // à adapter aussi
 					value: card.value
 				})
@@ -63,9 +74,9 @@
 		if (!selectedCard) return;
 
 		try {
-			const res = await fetch(`http://localhost:8080/api/votes?userId=1&storyId=42`, {
-	method: 'DELETE'
-});
+			const res = await fetch(`http://localhost:8080/api/votes?userId=${userId}&storyId=42`, {
+			method: 'DELETE'
+		});
 
 			if (!res.ok) throw new Error("Erreur lors de la suppression du vote");
 			console.log('Vote supprimé !');
@@ -74,9 +85,48 @@
 			console.error(err);
 		}
 	}
+	
+
+	async function fetchVotes() {
+		try {
+			const res = await fetch("http://localhost:8080/api/votes?storyId=42");
+			if (!res.ok) throw new Error("Erreur lors de la récupération des votes");
+
+			allVotes = await res.json();
+
+			// Synchronise selectedCard avec le vote de l'utilisateur actif
+			const userVote = allVotes.find(v => v.userId === userId);
+			if (userVote) {
+				selectedCard = cards.find(c => c.value === userVote.value) ?? null;
+			} else {
+				selectedCard = null;
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+
+function changeUser() {
+	userId = userId === 1 ? 2 : 1; // Change l'utilisateur de 1 à 2 ou vice versa
+	warningMessage = `You are now User ${userId}`;
+	setTimeout(() => (warningMessage = null), 3000);
+	// Réinitialiser la carte sélectionnée à chaque changement d'utilisateur
+	selectedCard = null;
+	fetchVotes(); 
+}
+
+
+
 </script>
 
 <h1>{message}</h1>
+
+<h2>Active User: {userId}</h2>
+
+
+<button on:click={() => changeUser()}>Change User</button>
+
 
 <div class="card-deck">
 	<h2>Select a Card</h2>
@@ -92,6 +142,17 @@
 	{/if}
 	{#if warningMessage}
 		<p class="warning" transition:fade>{ warningMessage }</p>
+	{/if}
+	{#if allVotes.length > 0}
+		<h2>Votes</h2>
+		<ul>
+			{#each allVotes as vote (vote.userId)}
+				<li>User {vote.userId}: {vote.value}</li>
+			{/each}
+		</ul>
+	{/if}
+	{#if allVotes.length === 0}
+		<p>No votes yet.</p>
 	{/if}
 
 </div>
