@@ -31,4 +31,9 @@ public class VoteController {
         return ResponseEntity.ok(votes);
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> deselectionnerVote(@RequestParam Long userId, @RequestParam Long storyId) {
+        voteService.deselectionnerVote(userId, storyId);
+        return ResponseEntity.noContent().build();
+    }
 }

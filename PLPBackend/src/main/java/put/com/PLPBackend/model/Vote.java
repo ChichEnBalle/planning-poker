@@ -3,7 +3,10 @@ package put.com.PLPBackend.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "votes")
+@Table(name = "votes", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"userId", "storyId"})
+})
+
 
 public class Vote {
 
