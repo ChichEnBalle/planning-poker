@@ -50,3 +50,5 @@
 	<h2>Welcome, {user.name} (ID: {user.id})</h2>
 	<button on:click={() => { localStorage.removeItem('user'); user = null }}>Logout</button>
 {/if}
+
+
