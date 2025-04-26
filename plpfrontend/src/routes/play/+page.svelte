@@ -1,11 +1,9 @@
 <script lang="ts">
-    // Connexion and inscription
 	let name = '';
 	let user: { id: number; name: string } | null = null;
-    let userId: number | null = null; // Variable pour stocker uniquement l'ID de l'utilisateur
+    let userId: number | null = null;
 	let errorMessage: string | null = null;
 
-	// Connexion
 	async function login() {
 		const res = await fetch('http://localhost:8080/api/users/login', {
 			method: 'POST',
@@ -18,15 +16,12 @@
 			userId = user ? user.id : null;
 			errorMessage = null;
 			localStorage.setItem('user', JSON.stringify(user));
-
-			// Synchroniser l'état des votes pour l'utilisateur connecté
 			await fetchVotes();
 		} else {
 			errorMessage = "Utilisateur non trouvé.";
 		}
 	}
 
-	// Inscription
 	async function register() {
 		const res = await fetch('http://localhost:8080/api/users/register', {
 			method: 'POST',
@@ -36,7 +31,7 @@
 
 		if (res.ok) {
 			user = await res.json();
-			userId = user ? user.id : null; // Stocker l'ID de l'utilisateur dans la variable userId
+			userId = user ? user.id : null;
 			errorMessage = null;
 			// Stocker l'utilisateur dans localStorage pour persister la connexion
 			localStorage.setItem('user', JSON.stringify(user));
@@ -133,18 +128,38 @@
 	}
 
 	function logout() {
-    localStorage.removeItem('user');
-    user = null;
-    userId = null;
-    hasVoted = false;
-    selectedCard = null;
-    allVotes = [];
-}
+		localStorage.removeItem('user');
+		user = null;
+		userId = null;
+		hasVoted = false;
+		selectedCard = null;
+		allVotes = [];
+	}
+
+	async function resetVote() {
+		if (!selectedCard) return;
+
+		try {
+			const res = await fetch(`http://localhost:8080/api/votes?userId=${userId}&storyId=42`, {
+				method: 'DELETE'
+			});
+
+			if (!res.ok) throw new Error("Erreur lors de la suppression du vote");
+			console.log('Vote supprimé !');
+			selectedCard = null;
+			hasVoted = false;
+		} catch (err) {
+			errorMessage = "Erreur lors de la suppression du vote.";
+			setTimeout(() => (errorMessage = null), 5000);
+			console.error(err);
+		}
+	}
+
 </script>
 
 
-
 {#if !user}
+	<!-- First step, login or register if the user is unknown -->
 	<h2>Login</h2>
 	<input type="text" bind:value={name} placeholder="Your name" />
 	<button on:click={login}>Login</button>
@@ -153,9 +168,12 @@
 		<p style="color:red">{errorMessage}</p>
 	{/if}
 	{:else}
+
+	<!-- Second step, card selection -->
     <h2>Welcome, {user.name}</h2>
 	<button on:click={logout}>Logout</button>
 	<div class="card-deck">
+		<!-- If the user hasn't voted yet, they can select a card. -->
         {#if !hasVoted}
 			<h2>Select a Card</h2>
 			<div class="cards">
@@ -164,11 +182,14 @@
 				{/each}
 			</div>
 
+			<!-- If they have already voted, they can see the votes of all users. -->
 			{#if selectedCard}
 				<p>You selected: {selectedCard.value}</p>
 				<button on:click={submitVote}>Submit Vote</button>
 			{/if}
+
 		{:else}
+			<!-- Display the selected card and the votes of all users -->
 			<h2>Votes</h2>
 			{#if allVotes.length > 0}
 				<ul>
@@ -179,6 +200,9 @@
 			{:else}
 				<p>No votes yet.</p>
 			{/if}
+
+			<!-- Return to selection of card if you want to change your vote. -->
+			<button on:click={resetVote}>Return to selection</button>
 		{/if}
 
         {#if warningMessage}
