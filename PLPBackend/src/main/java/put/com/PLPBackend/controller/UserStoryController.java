@@ -30,7 +30,6 @@ public class UserStoryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserStory(@PathVariable Long id) {
-        System.out.println("ta grand mere2 la " + id);
         userStoryService.deleteUserStory(id);
         return ResponseEntity.noContent().build();
     }

@@ -24,7 +24,6 @@ public class UserStoryService {
     }
 
     public void deleteUserStory(Long id) {
-        System.out.println("ta grand mere la " + id);
         userStoryRepository.deleteById(id);
     }
 }
