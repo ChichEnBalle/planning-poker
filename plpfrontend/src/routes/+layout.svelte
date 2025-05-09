@@ -6,7 +6,9 @@
 </script>
 
 <div class="app">
-	<Header />
+	<!-- <Header /> -->
+
+	<div class="background-blur"></div>
 
 	<main>
 		{@render children()}
@@ -23,6 +25,26 @@
 		min-height: 100vh;
 	}
 
+	:global(body) {
+        margin: 0;
+        padding: 0;
+        background-image: url('.././images/planningPokerBackground.png');
+        background-repeat: repeat;
+        background-size: 20%;
+		
+    }
+
+	.background-blur {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(3px);
+        background-color: rgba(0, 0, 0, 0.18);
+        z-index: -1;
+    }
+
 	main {
 		flex: 1;
 		display: flex;
@@ -32,6 +54,7 @@
 		max-width: 64rem;
 		margin: 0 auto;
 		box-sizing: border-box;
+		align-items: center;
 	}
 
 	footer {
