@@ -31,6 +31,26 @@
         }
     }
 
+    async function addTaskToUserStory(id: number) {
+        const story = userStories.find(story => story.id === id);
+        if (story) {
+            console.log(`Adding task "${story.newTask}" to user story with ID ${id}`);
+            const response = await fetch(`http://localhost:8080/api/user-stories/${id}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(story.newTask) // Envoyer la nouvelle tâche
+            });
+
+            if (response.ok) {
+                const updatedStory = await response.json();
+                story.tasks = updatedStory.tasks; // Mettre à jour les tâches localement
+                story.newTask = ''; // Réinitialiser l'input
+            } else {
+                console.error('Failed to add task');
+            }
+        }
+    }
+
     async function deleteUserStory(id) {
         const response = await fetch(`http://localhost:8080/api/user-stories/${id}`, {
             method: 'DELETE'
@@ -60,6 +80,13 @@
     {#each userStories as story}
         <li>
             <strong>{story.title}</strong>: {story.description}
+            <ul>
+                {#each story.tasks as task}
+                    <li>{task}</li>
+                {/each}
+            </ul>
+            <input type="text" bind:value={story.newTask} placeholder="New Task"/>
+            <button on:click={() => addTaskToUserStory(story.id)}>Add</button>
             <button on:click={() => deleteUserStory(story.id)}>Delete</button>
         </li>
     {/each}

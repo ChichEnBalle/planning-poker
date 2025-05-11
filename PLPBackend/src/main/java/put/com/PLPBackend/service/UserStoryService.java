@@ -1,5 +1,6 @@
 package put.com.PLPBackend.service;
 
+import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import put.com.PLPBackend.model.UserStory;
 import put.com.PLPBackend.repository.UserStoryRepository;
@@ -25,5 +26,12 @@ public class UserStoryService {
 
     public void deleteUserStory(Long id) {
         userStoryRepository.deleteById(id);
+    }
+
+    public UserStory addTaskToUserStory(Long id, String task) {
+        UserStory userStory = userStoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User story not found with ID: " + id));
+        userStory.addTask(task);
+        return userStoryRepository.save(userStory);
     }
 }

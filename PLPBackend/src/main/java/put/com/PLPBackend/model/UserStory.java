@@ -1,5 +1,8 @@
 package put.com.PLPBackend.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -9,6 +12,12 @@ public class UserStory{
     private long id;
     private String title;
     private String description;
+    private Long admin;
+
+    @ElementCollection
+    private List<String> tasks = new ArrayList<>();
+    @ElementCollection
+    private List<Integer> votes = new ArrayList<>();
 
     public UserStory() {}
 
@@ -39,6 +48,30 @@ public class UserStory{
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getAdminId(){
+        return admin;
+    }
+
+    public List<String> getTasks(){
+        return tasks;
+    }
+
+    public void setTasks(List<String> tasks) {
+        this.tasks = tasks;
+    }
+
+    public void addTask(String task){
+        tasks.add(task);
+    }
+
+    public List<Integer> getVotes(){
+        return votes;
+    }
+
+    public void addVote(int vote){
+        votes.add(vote);
     }
 
 }

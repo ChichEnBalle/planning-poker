@@ -27,10 +27,16 @@ public class UserStoryController {
     public ResponseEntity<UserStory> createUserStory(@RequestBody UserStory userStory) {
         return ResponseEntity.ok(userStoryService.createUserStory(userStory));
     }
-
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserStory(@PathVariable Long id) {
         userStoryService.deleteUserStory(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @PostMapping("/{id}/tasks")
+    public ResponseEntity<UserStory> addTaskToUserStory(@PathVariable Long id, @RequestBody String task) {
+        UserStory updatedStory = userStoryService.addTaskToUserStory(id, task);
+        return ResponseEntity.ok(updatedStory);
     }
 }
