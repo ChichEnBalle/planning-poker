@@ -6,6 +6,8 @@
     let room = '';
     let user: { id: number; name: string } | null = null;
     let userId: number | null = null;
+    let users: { id: number; name: string }[] = [];
+
     
     let votes: { userId: number; storyId: number; value: string }[] = [];
    
@@ -13,28 +15,42 @@
 
     // Se connecter au WebSocket quand l'utilisateur soumet ses informations
     onMount(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-        user = JSON.parse(storedUser);
-        username = user.name;
-        userId = user.id;
-    }
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            user = JSON.parse(storedUser);
+            username = user.name;
+            userId = user.id;
+        }
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    listenForVotes((newVote) => {
-    if (newVote.value === null) {
-        // Retirer le vote annulé
-        votes = votes.filter(vote => vote.userId !== newVote.userId || vote.storyId !== newVote.storyId);
-    } else {
-        // Ajouter un nouveau vote
-        votes = [...votes, newVote];
-    }
-    return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-});
+        
+        listenForVotes(async (newVote) => {
+            if (!users.find(u => u.id === newVote.userId)) {
+                try {
+                    const res = await fetch(`http://localhost:8080/api/users/${newVote.userId}`);
+                    if (res.ok) {
+                        const userData = await res.json();
+                        users = [...users, userData];
+                    }
+                } catch (err) {
+                    console.error("Erreur lors de la récupération du nom d'utilisateur :", err);
+                }
+            }
 
-});
+            if (newVote.value === null) {
+                votes = votes.filter(vote => vote.userId !== newVote.userId || vote.storyId !== newVote.storyId);
+            } else {
+                votes = [
+                    ...votes.filter(vote => vote.userId !== newVote.userId || vote.storyId !== newVote.storyId),
+                    newVote
+                ];
+            }
+        });
+
+
+    
+    });
+
+
 
 
    
@@ -60,28 +76,35 @@
 			hasVoted = true; // Marquer l'utilisateur comme ayant voté
 			
     };
-    async function register() {
-		const res = await fetch('http://localhost:8080/api/users/register', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ name : username })
-		});
+    async function register(): Promise<boolean> {
+        const res = await fetch('http://localhost:8080/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: username })
+        });
 
-		if (res.ok) {
-			user = await res.json();
-			userId = user ? user.id : null;
-			// Stocker l'utilisateur dans localStorage pour persister la connexion
-			localStorage.setItem('user', JSON.stringify(user));
-		}
-	}
+        if (res.ok) {
+            user = await res.json();
+            userId = user?.id ?? null;
+            localStorage.setItem('user', JSON.stringify(user));
+            return true;
+        }
+
+        return false;
+    }
 
     const handleJoinRoom = async () => {
         if (username.trim() && room.trim()) {
             console.log(username, room);
-            await register(); // Attendre que l’utilisateur soit bien enregistré
+            if(await register()){
+                // Attendre que l’utilisateur soit bien enregistré
+                connectWebSocket(username, room); // Ensuite seulement, se connecter
+                hasJoined = true;
 
-            connectWebSocket(username, room); // Ensuite seulement, se connecter
-            hasJoined = true;
+            }
+            else {
+                alert("Username is already taken.");
+            }
         } else {
             alert("Username and room must be filled!");
         }
@@ -115,16 +138,7 @@
         hasJoined = false;
 	}
 
-    const handleBeforeUnload = () => {
-        if (userId !== null) {
-            // Annuler les votes avant de quitter
-            votes.forEach(vote => {
-                if (vote.userId === userId) {
-                    sendUnvote(userId, vote.storyId, room); // 42 est l'ID de la story
-                }
-            });
-        }
-    };
+   
 
     import { fade } from 'svelte/transition';
 	import Card from '../../components/Card.svelte';
@@ -193,11 +207,18 @@
                 <!-- Display the selected card and the votes of all users -->
                 <h2>Votes</h2>
                 {#if votes.length > 0}
-                    <ul>
-                        {#each votes as vote }
-                            <li>User {vote.userId}: {vote.value} on  {vote.storyId}</li>
-                        {/each}
-                    </ul>
+                <ul>
+                    {#each votes as vote}
+                        <li>
+                            {#if users.find(u => u.id === vote.userId)}
+                                {users.find(u => u.id === vote.userId).name}
+                            {:else}
+                                User {vote.userId}
+                            {/if}
+                            : {vote.value} on {vote.storyId}
+                        </li>
+                    {/each}
+                </ul>
                 {:else}
                     <p>No votes yet.</p>
                 {/if}

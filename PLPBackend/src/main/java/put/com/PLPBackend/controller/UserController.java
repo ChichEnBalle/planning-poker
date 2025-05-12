@@ -1,11 +1,13 @@
 package put.com.PLPBackend.controller;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,17 +29,21 @@ public class UserController {
 		this.userRepository = userRepository;
 	}
 
-	@PostMapping("/login")
-	public ResponseEntity<User> login(@RequestBody Map<String, String> body) {
-		String name = body.get("name");
-		return userRepository.findByName(name)
-				.map(ResponseEntity::ok)
-				.orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+	@GetMapping("{id}")
+	public ResponseEntity<User> getUserById(@PathVariable Long id) {
+		Optional<User> user = userRepository.findById(id);
+		return user.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
-
 	@PostMapping("/register")
-	public User register(@RequestBody User user) {
-		return userRepository.save(user);
+	public ResponseEntity<?> register(@RequestBody User user) {
+		boolean exists = userRepository.existsByName(user.getName());
+		if (exists) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken");
+		}
+		
+		User savedUser = userRepository.save(user);
+    	return ResponseEntity.ok(savedUser);
 	}
 
 	@DeleteMapping()
