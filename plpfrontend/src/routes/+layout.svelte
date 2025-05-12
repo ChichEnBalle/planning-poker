@@ -35,11 +35,12 @@
     }
 
 	.background-blur {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
+		min-height: 100vh;
         backdrop-filter: blur(3px);
         background-color: rgba(0, 0, 0, 0.18);
         z-index: -1;
@@ -62,6 +63,6 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		padding: 12px;
+		/* padding: 12px; */
 	}
 </style>

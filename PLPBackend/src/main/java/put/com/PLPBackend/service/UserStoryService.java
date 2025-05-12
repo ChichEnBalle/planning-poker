@@ -34,4 +34,12 @@ public class UserStoryService {
         userStory.addTask(task);
         return userStoryRepository.save(userStory);
     }
+
+    public UserStory modifyUserStory(Long id, String newTitle, String newDescription){
+        UserStory userStory = userStoryRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("User story not found with ID: " + id));
+        userStory.setTitle(newTitle);
+        userStory.setDescription(newDescription);
+        return userStoryRepository.save(userStory);
+    }
 }

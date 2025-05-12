@@ -15,7 +15,10 @@
     async function fetchUserStories() {
         const response = await fetch('http://localhost:8080/api/user-stories');
         if (response.ok) {
-            userStories = await response.json();
+            userStories = (await response.json()).map(story => ({
+                ...story,
+                isEditing: false
+            }));
         } else {
             console.error('Failed to fetch user stories');
         }
@@ -66,13 +69,13 @@
             const response = await fetch(`http://localhost:8080/api/user-stories/${id}/tasks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(story.newTask) // Envoyer la nouvelle tâche
+                body: JSON.stringify(story.newTask)
             });
 
             if (response.ok) {
                 const updatedStory = await response.json();
-                story.tasks = updatedStory.tasks; // Mettre à jour les tâches localement
-                story.newTask = ''; // Réinitialiser l'input
+                story.tasks = updatedStory.tasks;
+                story.newTask = '';
             } else {
                 console.error('Failed to add task');
             }
@@ -109,11 +112,9 @@
         reader.onload = (e) => {
             const content = e.target.result;
             
-            // Parser le XML
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(content, "text/xml");
             
-            // Extraire le titre
             const summary = xmlDoc.querySelector('summary');
             if (summary) {
                 importedTitle = summary.textContent;
@@ -124,7 +125,6 @@
                 }
             }
             
-            // Extraire la description
             const description = xmlDoc.querySelector('item description');
             if (description) {
                 importedDesc = description.textContent.replace(/<\/?p>/g, '');
@@ -142,12 +142,34 @@
         isFileImported = false;
     }
 
+    async function modifyUserStory(id: number, updatedTitle: string, updatedDescription: string) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/user-stories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: updatedTitle, description: updatedDescription })
+            });
+
+            if (response.ok) {
+                const updatedStory = await response.json();
+                userStories = userStories.map(story =>
+                    story.id === id ? updatedStory : story
+                );
+                console.log('User story updated:', updatedStory);
+            } else {
+                console.error('Failed to update user story');
+            }
+        } catch (error) {
+            console.error('Error updating user story:', error);
+        }
+    }
+
     onMount(() => {
         fetchUserStories();
     });
 </script>
 
-<div class="flex flex-col bg-white p-7 rounded">
+<div class="flex flex-col bg-white p-7 rounded-xl">
     <h1 class="text-[rgb(51,51,51)]">
         User Stories
     </h1>
@@ -156,15 +178,33 @@
 
         <!-- Create manually -->
         <form on:submit|preventDefault={createUserStory} class="w-1/2 mr-3 flex flex-col items-center">
-            <h2 class="text-[rgb(51,51,51)]">Create </h2>
-            <input type="text" bind:value={newTitle} placeholder="Title" required class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4" />
-            <textarea bind:value={newDescription} placeholder="Description" required class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"></textarea>
-            <button class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition-colors " type="submit">Create</button>
+            <h2 class="text-[rgb(51,51,51)] text-[25px]">
+                Create
+            </h2>
+            <input 
+                type="text" bind:value={newTitle} 
+                placeholder="Title" 
+                required 
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+            />
+            <textarea 
+                bind:value={newDescription}
+                placeholder="Description"
+                required
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+            >
+            </textarea>
+            <button 
+                class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
+                type="submit"
+            >
+                Create
+            </button>
         </form>
 
         <!-- Import XML -->
-        <div class="flex flex-col font-sans w-1/2 mr-3">
-            <h2 class="text-[rgb(51,51,51)]">Import XML</h2>
+        <div class="flex flex-col font-sans w-1/2 ml-3">
+            <h2 class="text-[rgb(51,51,51)] text-[25px]">Import XML</h2>
             <input 
                 type="file" 
                 bind:this={fileInput} 
@@ -177,7 +217,7 @@
             {#if !isFileImported}
                 <button 
                     on:click={() => fileInput.click()} 
-                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors cursor-pointer"
+                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
                 >
                     Import XML File
                 </button>
@@ -200,7 +240,7 @@
             <div class="mt-4 flex justify-center">
             <button 
                 on:click={createUserStoryFromImportedData} 
-                class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition-colors"
+                class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
             >
                 Create User Story from this file
             </button>
@@ -209,8 +249,8 @@
     </div>
     
     <!-- Display User Stories -->
-    <div class="mt-8">
-        <h2 class="text-[rgb(51,51,51)]">Existing User Stories</h2>
+    <div class="mt-6">
+        <h2 class="text-[rgb(51,51,51)] text-[25px]">Existing User Stories</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {#each userStories as story}
             <div class="bg-white shadow-md rounded-lg p-4 border border-gray-200">
@@ -221,26 +261,63 @@
                     <li class="list-disc list-inside">{task}</li>
                     {/each}
                 </ul>
-                <div class="flex gap-2">
+                <div class="flex justify-around gap-2">
                     <input 
                         type="text" 
                         bind:value={story.newTask} 
                         placeholder="New Task" 
-                        class="flex-1 bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3"
+                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3"
                     />
                     <button 
                         on:click={() => addTaskToUserStory(story.id)} 
-                        class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transition-colors"
+                        class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
                     >
                         Add
                     </button>
                 </div>
-                <button 
-                    on:click={() => deleteUserStory(story.id)} 
-                    class="mt-4 w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
-                >
-                    Delete
-                </button>
+                <div class="flex">
+                    <button 
+                    on:click={() => {
+                        story.isEditing = !story.isEditing;
+                        if (story.isEditing) {
+                            story.tempTitle = story.title;
+                            story.tempDescription = story.description;
+                        }
+                    }} 
+                        class="mt-4 mr-1 w-1/2 bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transform hover:-translate-y-0.5 transition duration-250"
+                        >
+                        {story.isEditing ? 'Cancel' : 'Edit'}
+                    </button>
+                    <button 
+                        on:click={() => deleteUserStory(story.id)} 
+                        class="mt-4 ml-1 w-1/2 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transform hover:-translate-y-0.5 transition duration-250"
+                        >
+                        Delete
+                    </button>
+                </div>
+
+                <!-- Formulaire de modification -->
+                {#if story.isEditing}
+                <div class="mt-4">
+                    <input 
+                        type="text" 
+                        bind:value={story.tempTitle} 
+                        placeholder="New Title" 
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                    />
+                    <textarea 
+                        bind:value={story.tempDescription} 
+                        placeholder="New Description" 
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                    ></textarea>
+                    <button 
+                        on:click={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
+                        class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+                {/if}
             </div>
             {/each}
         </div>
