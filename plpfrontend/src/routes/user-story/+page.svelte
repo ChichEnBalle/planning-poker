@@ -185,17 +185,17 @@
                 type="text" bind:value={newTitle} 
                 placeholder="Title" 
                 required 
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
             />
             <textarea 
                 bind:value={newDescription}
                 placeholder="Description"
                 required
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
             >
             </textarea>
             <button 
-                class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
+                class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                 type="submit"
             >
                 Create
@@ -217,7 +217,7 @@
             {#if !isFileImported}
                 <button 
                     on:click={() => fileInput.click()} 
-                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
+                    class="px-4 py-2 bg-[#858585] text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
                 >
                     Import XML File
                 </button>
@@ -240,7 +240,7 @@
             <div class="mt-4 flex justify-center">
             <button 
                 on:click={createUserStoryFromImportedData} 
-                class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
+                class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
             >
                 Create User Story from this file
             </button>
@@ -266,11 +266,11 @@
                         type="text" 
                         bind:value={story.newTask} 
                         placeholder="New Task" 
-                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3"
+                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3"
                     />
                     <button 
                         on:click={() => addTaskToUserStory(story.id)} 
-                        class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600 transform hover:-translate-y-0.5 transition duration-250"
+                        class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                         Add
                     </button>
@@ -284,13 +284,13 @@
                             story.tempDescription = story.description;
                         }
                     }} 
-                        class="mt-4 mr-1 w-1/2 bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transform hover:-translate-y-0.5 transition duration-250"
+                        class="mt-4 mr-1 w-1/2 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                         >
                         {story.isEditing ? 'Cancel' : 'Edit'}
                     </button>
                     <button 
                         on:click={() => deleteUserStory(story.id)} 
-                        class="mt-4 ml-1 w-1/2 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transform hover:-translate-y-0.5 transition duration-250"
+                        class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
                         >
                         Delete
                     </button>
@@ -298,17 +298,17 @@
 
                 <!-- Formulaire de modification -->
                 {#if story.isEditing}
-                <div class="mt-4">
+                <div class="mt-4 text-center">
                     <input 
                         type="text" 
                         bind:value={story.tempTitle} 
                         placeholder="New Title" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
                     />
                     <textarea 
                         bind:value={story.tempDescription} 
                         placeholder="New Description" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
                     ></textarea>
                     <button 
                         on:click={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
@@ -318,6 +318,12 @@
                     </button>
                 </div>
                 {/if}
+                <button 
+                     
+                    class="mt-4 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                    >
+                    Select
+                </button>
             </div>
             {/each}
         </div>
@@ -327,7 +333,7 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
 
-    h1{
+    h1,h2{
         font-family: 'Cal Sans';
     }
 

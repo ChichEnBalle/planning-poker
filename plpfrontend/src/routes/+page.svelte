@@ -13,16 +13,16 @@
     h1 {
         text-align: center;
         margin-top: 3rem;
-        color: rgb(51, 51, 51);
+        color: #dedede;
         font-family: 'Cal Sans';
         font-size: 3rem;
-        text-shadow: 0 0 10px rgb(118, 101, 76),
-                     0 0 20px rgb(118, 101, 76);
+        text-shadow: 0 0 10px #1F6838,
+                     0 0 20px #1F6838;
     }
 
     .button-play {
         align-items: center;
-        background-color: rgb(230, 202, 147);
+        background-color: #dedede;
         border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: .25rem;
         box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;

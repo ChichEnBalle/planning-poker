@@ -28,7 +28,7 @@
 	:global(body) {
         margin: 0;
         padding: 0;
-        background-image: url('.././images/planningPokerBackground.png');
+        background-image: url('.././images/planningPokerBackground2.png');
         background-repeat: repeat;
         background-size: 20%;
 		
