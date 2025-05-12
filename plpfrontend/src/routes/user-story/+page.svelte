@@ -68,26 +68,44 @@
     });
 </script>
 
-<h1>User Stories</h1>
+<div class="flex flex-col bg-white p-7 rounded">
+    <h1 class="text-[rgb(51,51,51)]">
+        User Stories
+    </h1>
+    
+    <div class="flex">
 
-<form on:submit|preventDefault={createUserStory}>
-    <input type="text" bind:value={newTitle} placeholder="Title" required />
-    <textarea bind:value={newDescription} placeholder="Description" required></textarea>
-    <button type="submit">Create</button>
-</form>
-
-<ul>
-    {#each userStories as story}
-        <li>
-            <strong>{story.title}</strong>: {story.description}
-            <ul>
-                {#each story.tasks as task}
+        <form on:submit|preventDefault={createUserStory} class="w-1/2 mr-3">
+            <input type="text" bind:value={newTitle} placeholder="Title" required class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4" />
+            <textarea bind:value={newDescription} placeholder="Description" required class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[rgb(230,202,147)] text-base outline-none text-gray-700 py-1 px-3 mb-4"></textarea>
+            <button type="submit">Create</button>
+        </form>
+        
+        <ul class="w-1/2 ml-3">
+            {#each userStories as story}
+            <li>
+                <strong>{story.title}</strong>: {story.description}
+                <ul>
+                    {#each story.tasks as task}
                     <li>{task}</li>
-                {/each}
-            </ul>
-            <input type="text" bind:value={story.newTask} placeholder="New Task"/>
-            <button on:click={() => addTaskToUserStory(story.id)}>Add</button>
-            <button on:click={() => deleteUserStory(story.id)}>Delete</button>
-        </li>
-    {/each}
-</ul>
+                    {/each}
+                </ul>
+                <input type="text" bind:value={story.newTask} placeholder="New Task"/>
+                <button on:click={() => addTaskToUserStory(story.id)}>Add</button>
+                <button on:click={() => deleteUserStory(story.id)}>Delete</button>
+            </li>
+            {/each}
+        </ul>
+    </div>
+        
+</div>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
+
+    h1{
+        font-family: 'Cal Sans';
+    }
+
+    
+</style>
