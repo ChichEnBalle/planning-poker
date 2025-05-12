@@ -10,6 +10,9 @@ import put.com.PLPBackend.model.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAll();
     Optional<User> findByName(String name);
+    Optional<User> findById(Long id);
+    void deleteById(Long id);
+    boolean existsById(Long id);
     
 
 }
