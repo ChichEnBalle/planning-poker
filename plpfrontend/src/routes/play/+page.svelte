@@ -38,6 +38,8 @@
 		}
 	}
 
+	
+
     // Vote
 
     import { fade } from 'svelte/transition';
@@ -167,7 +169,7 @@
 	{#if errorMessage}
 		<p style="color:red">{errorMessage}</p>
 	{/if}
-	{:else}
+{:else}
 
 	<!-- Second step, card selection -->
     <h2>Welcome, {user.name}</h2>
