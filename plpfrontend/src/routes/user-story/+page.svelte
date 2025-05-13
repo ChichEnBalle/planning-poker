@@ -8,6 +8,7 @@
     let fileInput: HTMLInputElement;
     let importedTitle = '';
     let importedDesc = '';
+    let importedEstimation ='';
     let fileName = '';
     let isFileImported = false;
 
@@ -19,6 +20,7 @@
                 ...story,
                 isEditing: false
             }));
+            console.log('User Stories:', userStories);
         } else {
             console.error('Failed to fetch user stories');
         }
@@ -50,7 +52,7 @@
         const response = await fetch('http://localhost:8080/api/user-stories', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: importedTitle, description: importedDesc })
+            body: JSON.stringify({ title: importedTitle, description: importedDesc, estimation: importedEstimation })
         });
 
         if (response.ok) {
@@ -129,8 +131,19 @@
             if (description) {
                 importedDesc = description.textContent.replace(/<\/?p>/g, '');
             }
+
+            const customfields = xmlDoc.querySelectorAll('customfield');
+            customfields.forEach((customfield) => {
+                const name = customfield.querySelector('customfieldname');
+                if (name && name.textContent === 'Story point estimate') {
+                    const value = customfield.querySelector('customfieldvalue');
+                    if (value) {
+                        importedEstimation = value.textContent.toString();
+                        console.log('Estimation :', importedEstimation);
+                    }
+                }
+            });
         };
-        
         reader.readAsText(file);
     }
 
@@ -256,6 +269,8 @@
             <div class="bg-white shadow-md rounded-lg p-4 border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 mb-2">{story.title}</h3>
                 <p class="text-gray-600 mb-4">{story.description}</p>
+                <div class="text-gray-700 font-semibold">Points : {story.estimation}</div>
+
                 <ul class="text-sm text-gray-500 mb-4">
                     {#each story.tasks as task}
                     <li class="list-disc list-inside">{task}</li>
@@ -296,7 +311,7 @@
                     </button>
                 </div>
 
-                <!-- Formulaire de modification -->
+                <!-- Edit User Story -->
                 {#if story.isEditing}
                 <div class="mt-4 text-center">
                     <input 
@@ -318,8 +333,7 @@
                     </button>
                 </div>
                 {/if}
-                <button 
-                     
+                <button
                     class="mt-4 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                     Select

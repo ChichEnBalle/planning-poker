@@ -3,6 +3,8 @@ package put.com.PLPBackend.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -14,6 +16,10 @@ public class UserStory{
     private String description;
     private Long admin;
 
+    @JsonProperty("estimation")
+    private String estimation;
+
+
     @ElementCollection
     private List<String> tasks = new ArrayList<>();
     @ElementCollection
@@ -23,8 +29,15 @@ public class UserStory{
 
     public UserStory(String title, String description) {
         this.title = title;
-        this.description = description;
+        this.description = description;;
     }
+
+    public UserStory(String title, String description, String estimation) {
+        this.title = title;
+        this.description = description;
+        this.estimation = estimation;
+    }
+
 
     public Long getId() {
         return id;
@@ -74,4 +87,11 @@ public class UserStory{
         votes.add(vote);
     }
 
+    public String getEstimation() {
+        return estimation;
+    }
+
+    public void setEstimation(String estimation) {
+        this.estimation = estimation;
+    }
 }
