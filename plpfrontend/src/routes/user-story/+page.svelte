@@ -8,7 +8,7 @@
     let fileInput: HTMLInputElement;
     let importedTitle = '';
     let importedDesc = '';
-    let importedEstimation ='';
+    let importedEstimation: number;
     let fileName = '';
     let isFileImported = false;
 
@@ -138,7 +138,7 @@
                 if (name && name.textContent === 'Story point estimate') {
                     const value = customfield.querySelector('customfieldvalue');
                     if (value) {
-                        importedEstimation = value.textContent.toString();
+                        importedEstimation = parseInt(value.textContent.toString(), 10);
                         console.log('Estimation :', importedEstimation);
                     }
                 }

@@ -17,7 +17,7 @@ public class UserStory{
     private Long admin;
 
     @JsonProperty("estimation")
-    private String estimation;
+    private int estimation;
 
 
     @ElementCollection
@@ -32,7 +32,7 @@ public class UserStory{
         this.description = description;;
     }
 
-    public UserStory(String title, String description, String estimation) {
+    public UserStory(String title, String description, int estimation) {
         this.title = title;
         this.description = description;
         this.estimation = estimation;
@@ -87,11 +87,11 @@ public class UserStory{
         votes.add(vote);
     }
 
-    public String getEstimation() {
+    public int getEstimation() {
         return estimation;
     }
 
-    public void setEstimation(String estimation) {
+    public void setEstimation(int estimation) {
         this.estimation = estimation;
     }
 }
