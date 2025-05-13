@@ -61,9 +61,6 @@
 
 
 
-
-   
-
     const handleSendVote = () => {
         if (!selectedCard) {
 			warningMessage = "Please select a card before submitting your vote.";

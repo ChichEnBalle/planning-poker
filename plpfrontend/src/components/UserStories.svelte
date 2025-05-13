@@ -13,7 +13,7 @@
     let importedDesc = $state('');
     let fileName = $state('');
     let isFileImported = $state(false);
-    let { getStoryId }:{ getStoryId: Function } = $props();
+    let { getStoryId }= $props();
 
 
     async function fetchUserStories() {
