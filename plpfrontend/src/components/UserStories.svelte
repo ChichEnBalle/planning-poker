@@ -1,6 +1,8 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
+    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes} from "$lib/websocketVote.js";
+
     
     let userStories: any[] = $state([]);
     let newTitle = $state('');
@@ -11,37 +13,20 @@
     let importedDesc = $state('');
     let fileName = $state('');
     let isFileImported = $state(false);
-    let { getStoryId }= $props();
+    let { getStoryId, room }= $props();
     let importedEstimation: number =$state(0);
 
 
-    async function fetchUserStories() {
-        const response = await fetch('http://localhost:8080/api/user-stories');
-        if (response.ok) {
-            userStories = (await response.json()).map(story => ({
-                ...story,
-                isEditing: false
-            }));
-        } else {
-            console.error('Failed to fetch user stories');
-        }
-    }
 
-    async function createUserStory() {
-        const response = await fetch('http://localhost:8080/api/user-stories', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: newTitle, description: newDescription })
-        });
+    
 
-        if (response.ok) {
-            const createdStory = await response.json();
-            userStories = [...userStories, createdStory];
-            newTitle = '';
-            newDescription = '';
-        } else {
-            console.error('Failed to create user story');
-        }
+
+    
+
+    function createUserStory() {
+
+        console.log('Creating user story:', newTitle, newDescription);
+        addUserStory({title : newTitle, description : newDescription},room);
     }
 
     async function createUserStoryFromImportedData() {
@@ -85,16 +70,9 @@
         }
     }
 
-    async function deleteUserStory(id: any) {
-        const response = await fetch(`http://localhost:8080/api/user-stories/${id}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
-            userStories = userStories.filter(story => story.id !== id);
-        } else {
-            console.error('Failed to delete user story');
-        }
+    async function deleteUS(id: any) {
+        deleteUserStory(id);
+        
     }
 
     function handleFileUpload(event) {
@@ -180,7 +158,16 @@
     }
 
     onMount(() => {
-        fetchUserStories();
+        listenForUserStories(async (newUserStory) => {
+            console.log('New user story received:', newUserStory);  
+            if (newUserStory.title === null) {
+                console.log('Deleting la user story:', newUserStory +" id "+ newUserStory.id);
+                userStories = userStories.filter(userStory => userStory.id !== newUserStory.id);
+            } else {
+                userStories = [...userStories, newUserStory];
+            console.log('New user story:', newUserStory);
+            } 
+        });
     });
 </script>
 

@@ -185,7 +185,7 @@
         <h2>Welcome, {username}</h2>
         <button on:click={logout}>Logout</button>
 
-        <UserStories {getStoryId}/>
+        <UserStories {getStoryId} {room}/>
         <div class="card-deck">
             {#if !hasVoted}
                 <h2>Select a Card</h2>

@@ -5,7 +5,8 @@ let client = null;
 // @ts-ignore
 let voteCallback = null; // Fonction de callback pour l'écoute des messages
 
-// @ts-ignore
+let userStoriesCallback = null; // Fonction de callback pour l'écoute des messages
+
 export const connectWebSocket = (username, room) => {
     client = new Client({
         brokerURL: 'ws://localhost:8080/play',
@@ -14,18 +15,26 @@ export const connectWebSocket = (username, room) => {
         },
         onConnect: () => {
             console.log('Connected to WebSocket');
-            // Abonnement au topic pour recevoir les messages de la room spécifique
-            // @ts-ignore
-            client.subscribe(`/topic/${room}`, (vote) => {
-                console.log('Received message:', vote.body);
-                // @ts-ignore
+
+            // S'abonner au topic pour les votes
+            client.subscribe(`/topic/${room}`, (message) => {
+                const data = JSON.parse(message.body);
+                console.log('Received vote message:', data);
+
                 if (voteCallback) {
-                    // Appeler le callback avec le message reçu
-                    voteCallback(JSON.parse(vote.body)); 
+                    voteCallback(data);
                 }
             });
 
-            
+            // S'abonner au topic pour les user stories
+            client.subscribe(`/topic/userStory/${room}`, (message) => {
+                const data = JSON.parse(message.body);
+                console.log('Received user story message:', data);
+
+                if (userStoriesCallback) {
+                    userStoriesCallback(data);
+                }
+            });
         },
         onStompError: (error) => {
             console.error('STOMP error', error);
@@ -61,7 +70,7 @@ export const sendUnvote = (userId, storyId, room) => {
         client.publish({
             destination: `/app/play.unvote/${room}`,
             body: JSON.stringify({
-                type: 'UNVOTE',
+                
                 userId: userId,
                 storyId: storyId,
                 room: room,
@@ -92,4 +101,46 @@ export const listenForVotes = (callback) => {
     console.log('Setting up message callback');
     voteCallback = callback;
 };
+
+
+// @ts-ignore
+export const listenForUserStories = (callback) => {
+    console.log('Setting up message callback for user stories');
+    userStoriesCallback = callback;
+};
+
+export const addUserStory = (userStory, room) => {
+    // @ts-ignore
+    if (client && client.connected) {
+        console.log('Adding user story :', userStory);
+        client.publish({
+            destination: `/app/play.addUserStory/${room}`,
+            body: JSON.stringify({
+                title: userStory.title,
+                description: userStory.description,
+                id: userStory.id,
+                room: room,
+            }),
+        });
+    }
+};
+
+export const deleteUserStory = (storyId, room) => {
+    // @ts-ignore
+    if (client && client.connected) {
+        console.log('Deleting user story :', storyId);
+        client.publish({
+            destination: `/app/play.deleteUserStory/${room}`,
+            body: JSON.stringify({
+                
+                id: storyId,
+                title : null,
+                room: room,
+            }),
+        });
+    }
+};
+
+
+
 
