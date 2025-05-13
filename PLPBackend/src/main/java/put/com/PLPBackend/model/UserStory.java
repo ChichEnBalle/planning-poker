@@ -13,6 +13,7 @@ public class UserStory{
     private String title;
     private String description;
     private Long admin;
+    private int estimation;
 
     @ElementCollection
     private List<String> tasks = new ArrayList<>();
@@ -24,6 +25,12 @@ public class UserStory{
     public UserStory(String title, String description) {
         this.title = title;
         this.description = description;
+    }
+
+    public UserStory(String title, String description, int estimation) {
+        this.title = title;
+        this.description = description;
+        this.estimation = estimation;
     }
 
     public Long getId() {
@@ -72,6 +79,10 @@ public class UserStory{
 
     public void addVote(int vote){
         votes.add(vote);
+    }
+
+    public int getEstimation(){
+        return estimation;
     }
 
 }
