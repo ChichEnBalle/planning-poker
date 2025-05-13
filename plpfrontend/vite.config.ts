@@ -9,7 +9,11 @@ export default defineConfig({
 	
 	server: {
 		host: "0.0.0.0",
-		port: 5173
+		port: 5173,
+		watch: {
+            usePolling: true, // Utilise le mode de sondage pour surveiller les fichiers montés
+            interval: 1000 // Intervalle de sondage (en millisecondes)
+        }
 	},
 	plugins: [tailwindcss(), sveltekit()],
 	test: {
