@@ -39,7 +39,10 @@
 		"vitest": "^3.0.0"
 	},
 	"dependencies": {
-		"rollup": "^4.40.0"
+		"@stomp/stompjs": "^7.1.1",
+		"rollup": "^4.40.0",
+		"sockjs-client": "^1.6.1",
+		"stompjs": "^2.3.3"
 	},
 	"optionalDependencies": {
 		"@rollup/rollup-linux-x64-musl": "4.9.5"
