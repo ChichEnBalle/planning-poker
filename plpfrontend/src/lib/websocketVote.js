@@ -5,7 +5,7 @@ let voteCallback = null; // Fonction de callback pour l'écoute des messages
 
 export const connectWebSocket = (username, room) => {
     client = new Client({
-        brokerURL: 'ws://localhost:8080/vote',
+        brokerURL: 'ws://localhost:8080/play',
         connectHeaders: {
             username: username,
         },
@@ -35,7 +35,7 @@ export const sendVote = (vote, room) => {
     if (client && client.connected) {
         console.log('Sending vote:', vote);
         client.publish({
-            destination: `/app/vote.sendVote/${room}`,
+            destination: `/app/play.sendVote/${room}`,
             body: JSON.stringify({
                 userId: vote.userId,
                 storyId: vote.storyId,
@@ -50,7 +50,7 @@ export const sendUnvote = (userId, storyId, room) => {
     if (client && client.connected) {
         console.log('Sending UNVOTE for user:', userId);
         client.publish({
-            destination: `/app/vote.unvote/${room}`,
+            destination: `/app/play.unvote/${room}`,
             body: JSON.stringify({
                 type: 'UNVOTE',
                 userId: userId,
@@ -65,7 +65,7 @@ export const sendUnvote = (userId, storyId, room) => {
 export const addUser = (user, room) => {
     if (client && client.connected) {
         client.publish({
-            destination: `/app/vote.addUser/${room}`,
+            destination: `/app/play.addUser/${room}`,
             body: JSON.stringify({
                 id: user.id,
                 name: user.name,

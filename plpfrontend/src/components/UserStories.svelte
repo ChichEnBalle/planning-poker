@@ -1,15 +1,19 @@
+
 <script lang="ts">
     import { onMount } from 'svelte';
 
-    let userStories: any[] = [];
-    let newTitle = '';
-    let newDescription = '';
+
+    
+    let userStories: any[] = $state([]);
+    let newTitle = $state('');
+    let newDescription = $state('');
 
     let fileInput: HTMLInputElement;
-    let importedTitle = '';
-    let importedDesc = '';
-    let fileName = '';
-    let isFileImported = false;
+    let importedTitle = $state('');
+    let importedDesc = $state('');
+    let fileName = $state('');
+    let isFileImported = $state(false);
+    let { getStoryId }:{ getStoryId: Function } = $props();
 
 
     async function fetchUserStories() {
@@ -177,7 +181,7 @@
     <div class="flex">
 
         <!-- Create manually -->
-        <form on:submit|preventDefault={createUserStory} class="w-1/2 mr-3 flex flex-col items-center">
+        <form onsubmit={createUserStory} class="w-1/2 mr-3 flex flex-col items-center">
             <h2 class="text-[rgb(51,51,51)] text-[25px]">
                 Create
             </h2>
@@ -208,7 +212,7 @@
             <input 
                 type="file" 
                 bind:this={fileInput} 
-                on:change={handleFileUpload} 
+                onchange={handleFileUpload} 
                 accept=".xml" 
                 class="hidden" 
                 id="fileInput"
@@ -216,7 +220,7 @@
             
             {#if !isFileImported}
                 <button 
-                    on:click={() => fileInput.click()} 
+                    onclick={() => fileInput.click()} 
                     class="px-4 py-2 bg-[#858585] text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
                 >
                     Import XML File
@@ -227,7 +231,7 @@
                         {fileName}
                     </span>
                     <button 
-                        on:click={resetImport} 
+                        onclick={resetImport} 
                         class="text-gray-500 hover:text-red-500 text-xl cursor-pointer px-1 leading-none"
                         title="Supprimer le fichier"
                     >
@@ -239,7 +243,7 @@
             
             <div class="mt-4 flex justify-center">
             <button 
-                on:click={createUserStoryFromImportedData} 
+                onclick={createUserStoryFromImportedData} 
                 class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
             >
                 Create User Story from this file
@@ -269,7 +273,7 @@
                         class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3"
                     />
                     <button 
-                        on:click={() => addTaskToUserStory(story.id)} 
+                        onclick={() => addTaskToUserStory(story.id)} 
                         class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                         Add
@@ -277,7 +281,7 @@
                 </div>
                 <div class="flex">
                     <button 
-                    on:click={() => {
+                    onclick={() => {
                         story.isEditing = !story.isEditing;
                         if (story.isEditing) {
                             story.tempTitle = story.title;
@@ -289,7 +293,7 @@
                         {story.isEditing ? 'Cancel' : 'Edit'}
                     </button>
                     <button 
-                        on:click={() => deleteUserStory(story.id)} 
+                        onclick={() => deleteUserStory(story.id)} 
                         class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
                         >
                         Delete
@@ -311,7 +315,7 @@
                         class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
                     ></textarea>
                     <button 
-                        on:click={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
+                        onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
                         class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
                     >
                         Save Changes
@@ -319,7 +323,7 @@
                 </div>
                 {/if}
                 <button 
-                     
+                    onclick={() => getStoryId(story.id)}
                     class="mt-4 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                     Select
