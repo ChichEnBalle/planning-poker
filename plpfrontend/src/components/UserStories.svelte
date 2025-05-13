@@ -209,7 +209,7 @@
     });
 </script>
 
-<div class="flex flex-col bg-white p-7 rounded-xl">
+<div class="flex flex-col p-7 rounded-xl">
     <h1 class="text-[rgb(51,51,51)]">
         User Stories
     </h1>
@@ -257,7 +257,7 @@
             {#if !isFileImported}
                 <button 
                     onclick={() => fileInput.click()} 
-                    class="px-4 py-2 bg-[#858585] text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
+                    class="px-4 py-2 bg-white text-[rgb(51,51,51)] rounded hover:bg-[#348449] hover:text-white transform hover:-translate-y-0.5 transition duration-250 border border-black"
                 >
                     Import XML File
                 </button>
@@ -355,7 +355,7 @@
                     ></textarea>
                     <button 
                         onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
-                        class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250"
+                        class="bg-[#348449] text-white py-1 px-3 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                         Save Changes
                     </button>
@@ -363,13 +363,13 @@
                 {/if}
                 <button 
                     onclick={() => getStoryId(story.id)}
-                    class="mt-4 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                    class="mt-3 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                     Select
                 </button>
                 <button 
                     onclick={() => exportToCSV(story)} 
-                    class="px-4 py-2 bg-[#858585] text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250 w-full mt-3"
+                    class="px-4 py-2 bg-white text-[rgb(51,51,51)] rounded hover:bg-[#348449] hover:text-white transform hover:-translate-y-0.5 transition duration-250 w-full mt-3 border border-black"
                     >
                         Export to CSV
                 </button>
