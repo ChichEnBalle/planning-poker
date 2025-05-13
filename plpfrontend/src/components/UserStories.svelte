@@ -1,8 +1,6 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-
-
     
     let userStories: any[] = $state([]);
     let newTitle = $state('');
@@ -14,6 +12,7 @@
     let fileName = $state('');
     let isFileImported = $state(false);
     let { getStoryId }:{ getStoryId: Function } = $props();
+    let importedEstimation: number =$state(0);
 
 
     async function fetchUserStories() {
@@ -54,7 +53,7 @@
         const response = await fetch('http://localhost:8080/api/user-stories', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: importedTitle, description: importedDesc })
+            body: JSON.stringify({ title: importedTitle, description: importedDesc, estimation: importedEstimation })
         });
 
         if (response.ok) {
@@ -133,6 +132,18 @@
             if (description) {
                 importedDesc = description.textContent.replace(/<\/?p>/g, '');
             }
+
+            const customfields = xmlDoc.querySelectorAll('customfield');
+            customfields.forEach((customfield) => {
+                const name = customfield.querySelector('customfieldname');
+                if (name && name.textContent === 'Story point estimate') {
+                    const value = customfield.querySelector('customfieldvalue');
+                    if (value) {
+                        importedEstimation = parseInt(value.textContent.toString(), 10);
+                        console.log('Estimation :', importedEstimation);
+                    }
+                }
+            });
         };
         
         reader.readAsText(file);
@@ -260,6 +271,9 @@
             <div class="bg-white shadow-md rounded-lg p-4 border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 mb-2">{story.title}</h3>
                 <p class="text-gray-600 mb-4">{story.description}</p>
+                {#if story.estimation!=0}
+                <div class="text-gray-700 font-semibold">Points : {story.estimation}</div>
+                {/if}
                 <ul class="text-sm text-gray-500 mb-4">
                     {#each story.tasks as task}
                     <li class="list-disc list-inside">{task}</li>
@@ -300,7 +314,7 @@
                     </button>
                 </div>
 
-                <!-- Formulaire de modification -->
+                <!-- Edit User Story -->
                 {#if story.isEditing}
                 <div class="mt-4 text-center">
                     <input 
