@@ -179,6 +179,31 @@
         }
     }
 
+    function exportToCSV(id:any) {
+        const csvContent = [
+            ['Title', 'Description', 'Estimation', 'Tasks'],
+            [
+                id.title,
+                id.description,
+                id.estimation || 'N/A',
+                id.tasks.length > 0 ? id.tasks.join('; ') : 'No tasks'
+            ]
+        ]
+            .map(row => row.map(value => `"${value}"`).join(';'))
+            .join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${id.title.replace(/\s+/g, '_')}_UserStory.csv`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+
     onMount(() => {
         fetchUserStories();
     });
@@ -341,6 +366,12 @@
                     class="mt-4 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
                     >
                     Select
+                </button>
+                <button 
+                    onclick={() => exportToCSV(story)} 
+                    class="px-4 py-2 bg-[#858585] text-white rounded hover:bg-green-600 transform hover:-translate-y-0.5 transition duration-250 w-full mt-3"
+                    >
+                        Export to CSV
                 </button>
             </div>
             {/each}
