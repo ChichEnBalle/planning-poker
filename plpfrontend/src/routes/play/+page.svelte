@@ -16,7 +16,6 @@
 
     
     let votes: { userId: number; storyId: number; value: string }[] = [];
-   
     let hasJoined = false;
 
     // Se connecter au WebSocket quand l'utilisateur soumet ses informations
@@ -57,7 +56,7 @@
     });
 
     function getStoryId(cStoryId: number) {
-       storyId = cStoryId;
+        storyId = cStoryId;
     }
 
 
@@ -229,7 +228,7 @@
                                     User {vote.userId}
                                 {/if}
                                 voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                 on {vote.storyId} <!-- essayer de display le nom de la userstory-->
+                                on {vote.storyId} <!-- essayer de display le nom de la userstory-->
                             </li>
                         {/each}
                     </ul>
