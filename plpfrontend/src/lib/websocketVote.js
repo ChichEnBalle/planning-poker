@@ -118,6 +118,7 @@ export const addUserStory = (userStory, room) => {
             body: JSON.stringify({
                 title: userStory.title,
                 description: userStory.description,
+                estimation: userStory.estimation,
                 id: userStory.id,
                 room: room,
             }),
@@ -125,15 +126,15 @@ export const addUserStory = (userStory, room) => {
     }
 };
 
-export const deleteUserStory = (storyId, room) => {
+export const deleteUserStory = (story, room) => {
     // @ts-ignore
     if (client && client.connected) {
-        console.log('Deleting user story :', storyId);
+        console.log('Deleting user story :', story);
         client.publish({
             destination: `/app/play.deleteUserStory/${room}`,
             body: JSON.stringify({
                 
-                id: storyId,
+                id: story.id,
                 title : null,
                 room: room,
             }),

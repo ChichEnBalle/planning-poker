@@ -34,20 +34,11 @@
             console.error('Imported title or description is missing');
             return;
         }
+        addUserStory({title : importedTitle, description : importedDesc, estimation:importedEstimation},room);
 
-        const response = await fetch('http://localhost:8080/api/user-stories', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: importedTitle, description: importedDesc, estimation: importedEstimation })
-        });
+        
 
-        if (response.ok) {
-            const createdStory = await response.json();
-            userStories = [...userStories, createdStory];
-            console.log('User Story created from imported data:', createdStory);
-        } else {
-            console.error('Failed to create user story from imported data');
-        }
+        
     }
 
     async function addTaskToUserStory(id: number) {
@@ -70,8 +61,9 @@
         }
     }
 
-    async function deleteUS(id: any) {
-        deleteUserStory(id);
+    function deleteUS(ustory) {
+        deleteUserStory(ustory);
+        userStories = userStories.filter(story => story.id !== ustory.id);
         
     }
 
@@ -190,7 +182,7 @@
                 userStories = userStories.filter(userStory => userStory.id !== newUserStory.id);
             } else {
                 userStories = [...userStories, newUserStory];
-            console.log('New user story:', newUserStory);
+                console.log('New user story:', newUserStory);
             } 
         });
     });
@@ -319,7 +311,7 @@
                         {story.isEditing ? 'Cancel' : 'Edit'}
                     </button>
                     <button 
-                        onclick={() => deleteUserStory(story.id)} 
+                        onclick={() => deleteUS(story)} 
                         class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
                         >
                         Delete
