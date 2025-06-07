@@ -21,10 +21,7 @@ body {
 	min-height: 100vh;
 	margin: 0;
 	background-attachment: fixed;
-	background-color: green
 }
-
-
 
 h1 {
 	font-size: 2rem;
@@ -32,7 +29,7 @@ h1 {
 }
 
 h2 {
-	font-size: 2rem;
+	/* font-size: 2rem; */
 	text-align: center;
 	margin: 2rem;
 }

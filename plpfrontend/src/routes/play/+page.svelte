@@ -1,46 +1,153 @@
 <script lang="ts">
-	let name = '';
-	let user: { id: number; name: string } | null = null;
+    import { onMount } from 'svelte';
+    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes } from '$lib/websocketVote.js';
+    import Login from "../../components/Login.svelte"
+    import UserStories from "../../components/UserStories.svelte"
+
+
+
+    let username = '';
+    let room = '';
+    let user: { id: number; name: string } | null = null;
     let userId: number | null = null;
-	let errorMessage: string | null = null;
+    let users: { id: number; name: string }[] = [];
+    let storyId = -1; // ID de la story fixe
+    let selected = false;
 
-	async function login() {
-		const res = await fetch('http://localhost:8080/api/users/login', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ name })
-		});
+    
+    let votes: { userId: number; storyId: number; value: string }[] = [];
+   
+    let hasJoined = false;
 
-		if (res.ok) {
-			user = await res.json();
-			userId = user ? user.id : null;
-			errorMessage = null;
-			localStorage.setItem('user', JSON.stringify(user));
-			await fetchVotes();
-		} else {
-			errorMessage = "Utilisateur non trouvé.";
+    // Se connecter au WebSocket quand l'utilisateur soumet ses informations
+    onMount(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            user = JSON.parse(storedUser);
+            username = user.name;
+            userId = user.id;
+        }
+
+        
+        listenForVotes(async (newVote) => {
+            if (!users.find(u => u.id === newVote.userId)) {
+                try {
+                    const res = await fetch(`http://localhost:8080/api/users/${newVote.userId}`);
+                    if (res.ok) {
+                        const userData = await res.json();
+                        users = [...users, userData];
+                    }
+                } catch (err) {
+                    console.error("Erreur lors de la récupération du nom d'utilisateur :", err);
+                }
+            }
+
+            if (newVote.value === null) {
+                votes = votes.filter(vote => vote.userId !== newVote.userId || vote.storyId !== newVote.storyId);
+            } else {
+                votes = [
+                    ...votes.filter(vote => vote.userId !== newVote.userId || vote.storyId !== newVote.storyId),
+                    newVote
+                ];
+            }
+        });
+
+
+    
+    });
+
+    function getStoryId(cStoryId: number) {
+       storyId = cStoryId;
+    }
+
+
+
+    const handleSendVote = () => {
+        if (!selectedCard) {
+			warningMessage = "Please select a card before submitting your vote.";
+			setTimeout(() => (warningMessage = null), 3000);
+			return;
 		}
+
+		if (hasVoted) {
+			warningMessage = "Vous avez déjà voté.";
+			setTimeout(() => (warningMessage = null), 3000);
+			return;
+		}
+
+		
+            
+            sendVote({ userId,storyId, content: selectedCard.value }, room);
+            
+			console.log('Vote enregistré !');
+			hasVoted = true; // Marquer l'utilisateur comme ayant voté
+			
+    };
+    async function register(): Promise<boolean> {
+        const res = await fetch('http://localhost:8080/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: username })
+        });
+
+        if (res.ok) {
+            user = await res.json();
+            userId = user?.id ?? null;
+            localStorage.setItem('user', JSON.stringify(user));
+            return true;
+        }
+
+        return false;
+    }
+
+    async function handleJoinRoom (cUsername: string, cRoom: string){
+        username = cUsername;
+        room = cRoom;
+        if (username.trim() && room.trim()) {
+            console.log(username, room);
+            if(await register()){
+                // Attendre que l’utilisateur soit bien enregistré
+                connectWebSocket(username, room); // Ensuite seulement, se connecter
+                hasJoined = true;
+
+            }
+            else {
+                alert("Username is already taken.");
+            }
+        } else {
+            alert("Username and room must be filled!");
+        }
+    };
+
+
+    async function logout() {
+
+        if (userId !== null) {
+        // Envoyer un message de "dé-vote" pour chaque vote de l'utilisateur
+        votes.forEach(vote => {
+            if (vote.userId === userId) {
+                sendUnvote(userId, vote.storyId, room); // Ici, 42 est l'ID de la story
+            }
+        });
+
+        // Supprimer l'utilisateur du serveur si nécessaire
+        await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
+            method: 'DELETE'
+        });
+    }
+
+		localStorage.removeItem('user');
+		user = null;
+		userId = null;
+		hasVoted = false;
+		selectedCard = null;
+		votes = [];
+        username = '';
+        room = '';
+        hasJoined = false;
 	}
 
-	async function register() {
-		const res = await fetch('http://localhost:8080/api/users/register', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ name })
-		});
-
-		if (res.ok) {
-			user = await res.json();
-			userId = user ? user.id : null;
-			errorMessage = null;
-			// Stocker l'utilisateur dans localStorage pour persister la connexion
-			localStorage.setItem('user', JSON.stringify(user));
-		}
-	}
-
-	
-
-    // Vote
+   
 
     import { fade } from 'svelte/transition';
 	import Card from '../../components/Card.svelte';
@@ -48,7 +155,7 @@
 	let hasVoted = false;
 
     let warningMessage: string | null = null;
-	let allVotes: { userId: number; value: string }[] = [];
+	
 
     // List of the cards to be displayed
 	let cards = [
@@ -68,154 +175,88 @@
 	let selectedCard: { id: number; value: string } | null = null;
 
 
-	async function fetchVotes() {
-		try {
-			const res = await fetch("http://localhost:8080/api/votes?storyId=42");
-			if (!res.ok) throw new Error("Erreur lors de la récupération des votes");
-
-			allVotes = await res.json();
-
-			// Vérifier si l'utilisateur connecté a déjà voté
-			const userVote = allVotes.find(v => v.userId === userId);
-			if (userVote) {
-				selectedCard = cards.find(c => c.value === userVote.value) ?? null;
-				hasVoted = true; // Marquer l'utilisateur comme ayant voté
-			} else {
-				selectedCard = null;
-				hasVoted = false; // L'utilisateur n'a pas encore voté
-			}
-		} catch (err) {
-			errorMessage = "Erreur lors de la récupération des votes.";
-			setTimeout(() => (errorMessage = null), 5000);
-			console.error(err);
-		}
-	}
-
-	async function submitVote() {
-		if (!selectedCard) {
-			warningMessage = "Please select a card before submitting your vote.";
-			setTimeout(() => (warningMessage = null), 3000);
-			return;
-		}
-
-		if (hasVoted) {
-			warningMessage = "Vous avez déjà voté.";
-			setTimeout(() => (warningMessage = null), 3000);
-			return;
-		}
-
-		try {
-			const res = await fetch('http://localhost:8080/api/votes', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					userId: userId,
-					storyId: 42,
-					value: selectedCard.value
-				})
-			});
-
-			if (!res.ok) throw new Error("Erreur lors de l'envoi du vote");
-
-			console.log('Vote enregistré !');
-			hasVoted = true; // Marquer l'utilisateur comme ayant voté
-			await fetchVotes(); // Récupérer les votes des autres utilisateurs
-		} catch (err) {
-			errorMessage = "Erreur lors de l'envoi du vote.";
-			setTimeout(() => (errorMessage = null), 5000);
-			console.error(err);
-		}
-	}
-
-	function logout() {
-		localStorage.removeItem('user');
-		user = null;
-		userId = null;
-		hasVoted = false;
-		selectedCard = null;
-		allVotes = [];
-	}
-
-	async function resetVote() {
-		if (!selectedCard) return;
-
-		try {
-			const res = await fetch(`http://localhost:8080/api/votes?userId=${userId}&storyId=42`, {
-				method: 'DELETE'
-			});
-
-			if (!res.ok) throw new Error("Erreur lors de la suppression du vote");
-			console.log('Vote supprimé !');
-			selectedCard = null;
-			hasVoted = false;
-		} catch (err) {
-			errorMessage = "Erreur lors de la suppression du vote.";
-			setTimeout(() => (errorMessage = null), 5000);
-			console.error(err);
-		}
-	}
-
 </script>
 
 
-{#if !user}
-	<!-- First step, login or register if the user is unknown -->
-	<h2>Login</h2>
-	<input type="text" bind:value={name} placeholder="Your name" />
-	<button on:click={login}>Login</button>
-	<button on:click={register}>Register</button>
-	{#if errorMessage}
-		<p style="color:red">{errorMessage}</p>
-	{/if}
-{:else}
+<div class=" mx-auto p-4 bg-white shadow-lg rounded-lg">
+    <h2 class="text-4xl font-semibold mb-4 text-center">Planning Pocker</h2>
+    {#if !username || !room || !hasJoined}
+        <Login {handleJoinRoom}></Login>
+    {:else}
+        <div class="flex justify-between">
+            <h2 class="text-2xl">Welcome, {username}</h2>
+            <button 
+                on:click={logout}
+                class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+                >
+                Logout
+            </button>
+        </div>
 
-	<!-- Second step, card selection -->
-    <h2>Welcome, {user.name}</h2>
-	<button on:click={logout}>Logout</button>
-	<div class="card-deck">
-		<!-- If the user hasn't voted yet, they can select a card. -->
-        {#if !hasVoted}
-			<h2>Select a Card</h2>
-			<div class="cards">
-				{#each cards as card (card.id)}
-					<Card value={card.value} selected={selectedCard?.id === card.id} onSelect={() => (selectedCard = card)} />
-				{/each}
-			</div>
+        <UserStories {getStoryId} {room}/>
+        {#if storyId != -1}
+            <p class="text-center">User story number {storyId} selected.</p>
+            <div class="card-deck">
+                {#if !hasVoted}
+                    <h2>Select a Card</h2>
+                    <div class="cards">
+                        {#each cards as card (card.id)}
+                            <Card value={card.value} selected={selectedCard?.id === card.id} onSelect={() => (selectedCard = card)} />
+                        {/each}
+                    </div>
 
-			<!-- If they have already voted, they can see the votes of all users. -->
-			{#if selectedCard}
-				<p>You selected: {selectedCard.value}</p>
-				<button on:click={submitVote}>Submit Vote</button>
-			{/if}
+                    <!-- If they have already voted, they can see the votes of all users. -->
+                    {#if selectedCard}
+                        <p>You selected: {selectedCard.value}</p>
+                        <button 
+                            on:click={handleSendVote}
+                            class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                        >
+                            Submit Vote
+                        </button>
+                    {/if}
 
-		{:else}
-			<!-- Display the selected card and the votes of all users -->
-			<h2>Votes</h2>
-			{#if allVotes.length > 0}
-				<ul>
-					{#each allVotes as vote (vote.userId)}
-						<li>User {vote.userId}: {vote.value}</li>
-					{/each}
-				</ul>
-			{:else}
-				<p>No votes yet.</p>
-			{/if}
+                {:else}
+                    <!-- Display the selected card and the votes of all users -->
+                    <h2>Votes</h2>
+                    {#if votes.length > 0}
+                    <ul>
+                        {#each votes as vote}
+                            <li>
+                                {#if users.find(u => u.id === vote.userId)}
+                                    {users.find(u => u.id === vote.userId).name}
+                                {:else}
+                                    User {vote.userId}
+                                {/if}
+                                voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
+                                 on {vote.storyId} <!-- essayer de display le nom de la userstory-->
+                            </li>
+                        {/each}
+                    </ul>
+                    {:else}
+                        <p>No votes yet.</p>
+                    {/if}
 
-			<!-- Return to selection of card if you want to change your vote. -->
-			<button on:click={resetVote}>Return to selection</button>
-		{/if}
-
-        {#if warningMessage}
-            <p class="warning" transition:fade>{warningMessage}</p>
+                    <!-- Return to selection of card if you want to change your vote. -->
+                    <button 
+                        on:click={() => {
+                            if (userId && room) {
+                                sendUnvote(userId, storyId, room); // 42 est l'id de ta story fixe
+                            }
+                            hasVoted = false;
+                            selectedCard = null;
+                        }}
+                        class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                    >
+                        Return to selection
+                    </button>
+                    
+                    
+                {/if}
+            </div>
         {/if}
-        {#if errorMessage}
-            <p class="error" transition:fade>{errorMessage}</p>
-        {/if}
-    </div>
-{/if}
-
+    {/if}
+</div>
 
 <style>
 	.card-deck {
@@ -228,8 +269,11 @@
 		flex-wrap: wrap;
 	}
 
+    h2{
+        font-family: 'Cal Sans';
+    }
 
-	button {
+	/* button {
 		margin-top: 1rem;
 		padding: 0.5rem 1rem;
 		background-color: #cc0000;
@@ -241,7 +285,7 @@
 
 	button:hover {
 		background-color: #a60000;
-	}
+	} */
 	.warning {
 		color: #d9534f;
 		font-weight: bold;

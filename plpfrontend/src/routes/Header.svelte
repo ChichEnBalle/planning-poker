@@ -9,7 +9,7 @@
 			<li><a href="/">Home</a></li>
 			<li><a href="/play">Play</a></li>
 			<li><a href="/chat">Chat</a></li>
-			<li><a href="/vote">Vote</a></li>
+			
 		</ul>
 	</nav>
 </header>
