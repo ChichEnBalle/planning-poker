@@ -1,26 +1,14 @@
 package put.com.PLPBackend.controller;
 
-import org.springframework.http.ResponseEntity;
+import java.util.List;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import put.com.PLPBackend.model.User;
 import put.com.PLPBackend.model.UserStory;
 import put.com.PLPBackend.service.UserStoryService;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 
 @RestController
@@ -32,19 +20,16 @@ public class UserStoryController {
         this.userStoryService = userStoryService;
     }
 
-    /* @MessageMapping("/play.getUserStories/{room}")
-    @SendTo("/topic/{room}")
-    public List<UserStory> getAllUserStories() {
-        return userStoryService.getAllUserStories();
+    @GetMapping("/api/userstories/{roomId}")
+    public List<UserStory> getUserStoriesForRoom(@PathVariable String roomId) {
+        return userStoryService.getUserStoriesForRoom(roomId);
     }
- */
 
     @MessageMapping("/play.addUserStory/{room}")
     @SendTo("/topic/userStory/{room}")
     public UserStory createUserStory(@Payload UserStory userStory, @DestinationVariable String room) {
-        System.out.println("Received user story: title = " + userStory.getTitle() + ", descr = " + userStory.getDescription()+ "id = " + userStory.getId());
-
-        return userStoryService.createUserStory(userStory);
+        userStory.setRoomId(room);
+        return userStoryService.saveUserStory(userStory);
     }
 
     @MessageMapping("/play.deleteUserStory/{room}")
@@ -63,21 +48,4 @@ public class UserStoryController {
         return deletedStory;
         
     }
-
-    /* @PostMapping("/{id}/tasks")
-    public ResponseEntity<UserStory> addTaskToUserStory(@PathVariable Long id, @RequestBody String task) {
-        UserStory updatedStory = userStoryService.addTaskToUserStory(id, task);
-        return ResponseEntity.ok(updatedStory);
-    }
-
-    @PutMapping("/{id}")
-        public ResponseEntity<UserStory> modifyUserStory(@PathVariable Long id, @RequestBody UserStory updatedUserStory) {
-        UserStory modifiedStory = userStoryService.modifyUserStory(
-                id,
-                updatedUserStory.getTitle(),
-                updatedUserStory.getDescription()
-        );
-        return ResponseEntity.ok(modifiedStory);
-    } */
-
 }

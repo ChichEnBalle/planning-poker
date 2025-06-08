@@ -1,9 +1,7 @@
-
 <script lang="ts">
     import { onMount } from 'svelte';
     import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes} from "$lib/websocketVote.js";
 
-    
     let userStories: any[] = $state([]);
     let newTitle = $state('');
     let newDescription = $state('');
@@ -14,17 +12,22 @@
     let fileName = $state('');
     let isFileImported = $state(false);
     let { getStoryId, room }= $props();
+
     let importedEstimation: number =$state(0);
 
+    async function fetchUserStories() {
+        if (!room) return;
+        const res = await fetch(`http://localhost:8080/api/userstories/${room}`);
+        if (res.ok) {
+            userStories = await res.json();
+        }
+    }
 
-
-    
-
-
-    
+    if (room) {
+        fetchUserStories();
+    }
 
     function createUserStory() {
-
         console.log('Creating user story:', newTitle, newDescription);
         addUserStory({title : newTitle, description : newDescription},room);
     }
@@ -72,7 +75,6 @@
 
     async function deleteUS(id: any) {
         deleteUserStory(id);
-        
     }
 
     function handleFileUpload(event) {

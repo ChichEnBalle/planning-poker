@@ -13,14 +13,10 @@
     let users: { id: number; name: string }[] = [];
     let storyId = -1; // ID de la story fixe
     let selected = false;
-
-    
     let votes: { userId: number; storyId: number; value: string }[] = [];
-   
     let hasJoined = false;
 
-    // Se connecter au WebSocket quand l'utilisateur soumet ses informations
-    onMount(() => {
+    onMount(async () => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             user = JSON.parse(storedUser);
@@ -28,7 +24,15 @@
             userId = user.id;
         }
 
-        
+        const storedUsername = localStorage.getItem('username');
+        const storedRoom = localStorage.getItem('room');
+        if (storedUsername && storedRoom) {
+            username = storedUsername;
+            room = storedRoom;
+            hasJoined = true;
+            connectWebSocket(username, room);
+        }
+
         listenForVotes(async (newVote) => {
             if (!users.find(u => u.id === newVote.userId)) {
                 try {
@@ -51,13 +55,10 @@
                 ];
             }
         });
-
-
-    
     });
 
     function getStoryId(cStoryId: number) {
-       storyId = cStoryId;
+        storyId = cStoryId;
     }
 
 
@@ -106,10 +107,11 @@
         if (username.trim() && room.trim()) {
             console.log(username, room);
             if(await register()){
-                // Attendre que l’utilisateur soit bien enregistré
-                connectWebSocket(username, room); // Ensuite seulement, se connecter
+                connectWebSocket(username, room);
                 hasJoined = true;
-
+                
+                localStorage.setItem('username', username);
+                localStorage.setItem('room', room);
             }
             else {
                 alert("Username is already taken.");
@@ -121,14 +123,16 @@
 
 
     async function logout() {
-
         if (userId !== null) {
-        // Envoyer un message de "dé-vote" pour chaque vote de l'utilisateur
         votes.forEach(vote => {
             if (vote.userId === userId) {
-                sendUnvote(userId, vote.storyId, room); // Ici, 42 est l'ID de la story
+                sendUnvote(userId, vote.storyId, room);
             }
         });
+
+        localStorage.removeItem('user');
+        localStorage.removeItem('username');
+        localStorage.removeItem('room');
 
         // Supprimer l'utilisateur du serveur si nécessaire
         await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
@@ -146,9 +150,7 @@
         room = '';
         hasJoined = false;
 	}
-
-   
-
+    
     import { fade } from 'svelte/transition';
 	import Card from '../../components/Card.svelte';
 
@@ -229,7 +231,7 @@
                                     User {vote.userId}
                                 {/if}
                                 voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                 on {vote.storyId} <!-- essayer de display le nom de la userstory-->
+                                on {vote.storyId}
                             </li>
                         {/each}
                     </ul>
