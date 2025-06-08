@@ -41,7 +41,7 @@ public class VoteController {
         // Gérer l'envoi du message
 
         String name =  userRepository.findById(vote.getUserId())
-                .map(User::getName)
+                .map(User::getUsername)
                 .orElse("Unknown User");
         System.out.println("Message reçu pour la room " + room + " de la part de "+name+": " + vote.getValue());
 
@@ -58,7 +58,7 @@ public class VoteController {
     @MessageMapping("/play.addUser/{room}")
     @SendTo("/topic/{room}")
     public User addUser(User u, @DestinationVariable String room, SimpMessageHeaderAccessor headerAccessor) {
-        System.out.println("User " + u.getName() + " joined the room " + room);
+        System.out.println("User " + u.getUsername() + " joined the room " + room);
         
 
         // Utiliser RoomService pour obtenir ou créer la room

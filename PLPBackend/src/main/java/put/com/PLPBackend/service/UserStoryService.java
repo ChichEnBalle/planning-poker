@@ -1,6 +1,5 @@
 package put.com.PLPBackend.service;
 
-import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import put.com.PLPBackend.model.UserStory;
 import put.com.PLPBackend.repository.UserStoryRepository;

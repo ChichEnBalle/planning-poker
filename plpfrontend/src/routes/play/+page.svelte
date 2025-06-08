@@ -3,14 +3,14 @@
     import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes } from '$lib/websocketVote.js';
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
-
+	import Card from '../../components/Card.svelte';
 
 
     let username = '';
     let room = '';
-    let user: { id: number; name: string } | null = null;
+    let user: { id: number; username: string } | null = null;
     let userId: number | null = null;
-    let users: { id: number; name: string }[] = [];
+    let users: { id: number; username: string }[] = [];
     let storyId = -1; // ID de la story fixe
     let selected = false;
     let votes: { userId: number; storyId: number; value: string }[] = [];
@@ -20,7 +20,7 @@
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             user = JSON.parse(storedUser);
-            username = user.name;
+            username = user.username;
             userId = user.id;
         }
 
@@ -61,8 +61,6 @@
         storyId = cStoryId;
     }
 
-
-
     const handleSendVote = () => {
         if (!selectedCard) {
 			warningMessage = "Please select a card before submitting your vote.";
@@ -71,24 +69,21 @@
 		}
 
 		if (hasVoted) {
-			warningMessage = "Vous avez déjà voté.";
+			warningMessage = "You already voted.";
 			setTimeout(() => (warningMessage = null), 3000);
 			return;
 		}
-
-		
-            
-            sendVote({ userId,storyId, content: selectedCard.value }, room);
-            
-			console.log('Vote enregistré !');
-			hasVoted = true; // Marquer l'utilisateur comme ayant voté
-			
+        sendVote({ userId,storyId, content: selectedCard.value }, room);
+        
+        console.log('Vote enregistré !');
+        hasVoted = true; // La gestion de hasVoted est à revoir, il faudrait savoir sur quelle userstory un user a voté
     };
+
     async function register(): Promise<boolean> {
         const res = await fetch('http://localhost:8080/api/users/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: username })
+            body: JSON.stringify({ username: username })
         });
 
         if (res.ok) {
@@ -124,21 +119,21 @@
 
     async function logout() {
         if (userId !== null) {
-        votes.forEach(vote => {
-            if (vote.userId === userId) {
-                sendUnvote(userId, vote.storyId, room);
-            }
-        });
+            votes.forEach(vote => {
+                if (vote.userId === userId) {
+                    sendUnvote(userId, vote.storyId, room);
+                }
+            });
 
-        localStorage.removeItem('user');
-        localStorage.removeItem('username');
-        localStorage.removeItem('room');
+            localStorage.removeItem('user');
+            localStorage.removeItem('username');
+            localStorage.removeItem('room');
 
-        // Supprimer l'utilisateur du serveur si nécessaire
-        await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
-            method: 'DELETE'
-        });
-    }
+            // Supprimer l'utilisateur du serveur si nécessaire
+            await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
+                method: 'DELETE'
+            });
+        }
 
 		localStorage.removeItem('user');
 		user = null;
@@ -151,8 +146,7 @@
         hasJoined = false;
 	}
     
-    import { fade } from 'svelte/transition';
-	import Card from '../../components/Card.svelte';
+
 
 	let hasVoted = false;
 
@@ -185,11 +179,11 @@
     {#if !username || !room || !hasJoined}
         <Login {handleJoinRoom}></Login>
     {:else}
-        <div class="flex justify-between">
-            <h2 class="text-2xl">Welcome, {username}</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl">Welcome to room {room}, {username}</h2>
             <button 
                 on:click={logout}
-                class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+                class="bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
                 >
                 Logout
             </button>
@@ -226,7 +220,7 @@
                         {#each votes as vote}
                             <li>
                                 {#if users.find(u => u.id === vote.userId)}
-                                    {users.find(u => u.id === vote.userId).name}
+                                    {users.find(u => u.id === vote.userId).username}
                                 {:else}
                                     User {vote.userId}
                                 {/if}

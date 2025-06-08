@@ -1,8 +1,7 @@
 package put.com.PLPBackend.controller;
 
-import java.util.Optional;
+import java.util.Map;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,46 +13,50 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
 import put.com.PLPBackend.model.User;
-import put.com.PLPBackend.repository.UserRepository;
+import put.com.PLPBackend.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
-	private final UserRepository userRepository;
-
-	public UserController(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+	private final UserService userService;
 
 	@GetMapping("{id}")
 	public ResponseEntity<User> getUserById(@PathVariable Long id) {
-		Optional<User> user = userRepository.findById(id);
-		return user.map(ResponseEntity::ok)
-				.orElse(ResponseEntity.notFound().build());
+		return this.userService.getUserById(id);
 	}
+
 	@PostMapping("/register")
-	public ResponseEntity<?> register(@RequestBody User user) {
-		boolean exists = userRepository.existsByName(user.getName());
-		if (exists) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken");
-		}
-		
-		User savedUser = userRepository.save(user);
-    	return ResponseEntity.ok(savedUser);
+	public ResponseEntity<?> register(@RequestBody Map<String, String> payload) {
+		String username = payload.get("username");
+        String password = payload.get("password");
+        try {
+            User user = userService.register(username, password);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
 	}
+
+	@PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
+        String username = payload.get("username");
+        String password = payload.get("password");
+        try {
+            String token = userService.login(username, password);
+            return ResponseEntity.ok(token);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 
 	@DeleteMapping()
 	public ResponseEntity<?> deleteUser(@RequestParam Long userId) {
-		if (userRepository.existsById(userId)) {
-			userRepository.deleteById(userId);
-			return ResponseEntity.ok().build();
-		} else {
-			return ResponseEntity.notFound().build();
-		}
+		return this.userService.deleteUser(userId);
 	}
-
 }
 
