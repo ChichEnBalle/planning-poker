@@ -42,4 +42,12 @@ public class UserStoryService {
         userStory.setDescription(newDescription);
         return userStoryRepository.save(userStory);
     }
+
+    public List<UserStory> getUserStoriesForRoom(String roomId) {
+        return userStoryRepository.findByRoomId(roomId);
+    }
+
+    public UserStory saveUserStory(UserStory userStory) {
+        return userStoryRepository.save(userStory);
+    }
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import put.com.PLPBackend.model.User;
+import put.com.PLPBackend.model.UserStory;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAll();
@@ -14,7 +15,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void deleteById(Long id);
     boolean existsById(Long id);
     boolean existsByName(String name);
-    
-
 }
 

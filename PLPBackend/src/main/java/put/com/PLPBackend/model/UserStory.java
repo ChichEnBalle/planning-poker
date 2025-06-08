@@ -14,6 +14,8 @@ public class UserStory{
     private String description;
     private Long admin;
     private int estimation;
+    private String roomId;
+
 
     @ElementCollection
     private List<String> tasks = new ArrayList<>();
@@ -22,15 +24,17 @@ public class UserStory{
 
     public UserStory() {}
 
-    public UserStory(String title, String description) {
+    public UserStory(String title, String description, String roomId) {
         this.title = title;
         this.description = description;
+        this.roomId = roomId;
     }
 
-    public UserStory(String title, String description, int estimation) {
+    public UserStory(String title, String description, int estimation, String roomId) {
         this.title = title;
         this.description = description;
         this.estimation = estimation;
+        this.roomId = roomId;
     }
 
     public Long getId() {
@@ -83,6 +87,14 @@ public class UserStory{
 
     public int getEstimation(){
         return estimation;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
 }
