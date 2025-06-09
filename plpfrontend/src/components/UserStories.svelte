@@ -186,6 +186,10 @@
             } 
         });
     });
+
+    export function getTitle(storyId: number): string | undefined {
+        return userStories.find(story => story.id === storyId)?.title;
+    }
 </script>
 
 <div class="flex flex-col p-7 rounded-xl">

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes } from '$lib/websocketVote.js';
+    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForUsers } from '$lib/websocketVote.js';
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
 
@@ -15,6 +15,7 @@
     let selected = false;
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
+    let userStoriesRef;
 
     onMount(async () => {
         const storedUser = localStorage.getItem('user');
@@ -31,6 +32,22 @@
             room = storedRoom;
             hasJoined = true;
             connectWebSocket(username, room);
+        }
+
+        if (room) {
+            const res = await fetch(`http://localhost:8080/api/users/room/${room}`);
+            if (res.ok) {
+                users = await res.json();
+            }
+
+            listenForUsers(room, (newUsers) => {
+                users = newUsers;
+            });
+        }
+
+        const res = await fetch(`http://localhost:8080/api/users/room/${room}`);
+        if (res.ok) {
+            users = await res.json();
         }
 
         listenForVotes(async (newVote) => {
@@ -85,7 +102,7 @@
 			
     };
     async function register(): Promise<boolean> {
-        const res = await fetch('http://localhost:8080/api/users/register', {
+        const res = await fetch('http://localhost:8080/api/users/register?roomId=' + room, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: username })
@@ -112,6 +129,11 @@
                 
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
+
+                const res = await fetch(`http://localhost:8080/api/users/room/${room}`);
+                if (res.ok) {
+                    users = await res.json();
+                }
             }
             else {
                 alert("Username is already taken.");
@@ -134,8 +156,7 @@
         localStorage.removeItem('username');
         localStorage.removeItem('room');
 
-        // Supprimer l'utilisateur du serveur si nécessaire
-        await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
+        await fetch(`http://localhost:8080/api/users?userId=${userId}&roomId=${room}`, {
             method: 'DELETE'
         });
     }
@@ -153,6 +174,7 @@
     
     import { fade } from 'svelte/transition';
 	import Card from '../../components/Card.svelte';
+	import Participants from '../../components/Participants.svelte';
 
 	let hasVoted = false;
 
@@ -194,8 +216,9 @@
                 Logout
             </button>
         </div>
+        <Participants {users} />
 
-        <UserStories {getStoryId} {room}/>
+        <UserStories bind:this={userStoriesRef} {getStoryId} {room}/>
         {#if storyId != -1}
             <p class="text-center">User story number {storyId} selected.</p>
             <div class="card-deck">
@@ -231,8 +254,7 @@
                                     User {vote.userId}
                                 {/if}
                                 voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                on {vote.storyId}
-                            </li>
+                                on {userStoriesRef?.getTitle(vote.storyId) ?? vote.storyId}                            </li>
                         {/each}
                     </ul>
                     {:else}

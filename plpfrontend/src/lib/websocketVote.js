@@ -89,7 +89,7 @@ export const addUser = (user, room) => {
             body: JSON.stringify({
                 id: user.id,
                 name: user.name,
-                
+                roomId: room,
             }),
         });
     }
@@ -125,6 +125,14 @@ export const addUserStory = (userStory, room) => {
         });
     }
 };
+
+export function listenForUsers(room, callback) {
+    if (!client) return;
+    client.subscribe(`/topic/users/${room}`, message => {
+        const users = JSON.parse(message.body);
+        callback(users);
+    });
+}
 
 export const deleteUserStory = (story, room) => {
     // @ts-ignore
