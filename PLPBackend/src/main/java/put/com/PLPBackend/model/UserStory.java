@@ -3,6 +3,8 @@ package put.com.PLPBackend.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -18,8 +20,10 @@ public class UserStory{
 
 
     @ElementCollection
+    @JsonIgnore
     private List<String> tasks = new ArrayList<>();
     @ElementCollection
+    @JsonIgnore
     private List<Integer> votes = new ArrayList<>();
 
     public UserStory() {}

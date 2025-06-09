@@ -142,6 +142,15 @@ export const deleteUserStory = (story, room) => {
     }
 };
 
+export const updateUserStory = (userStory, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.updateUserStory/${room}`,
+            body: JSON.stringify(userStory),
+        });
+    }
+};
+
 
 
 

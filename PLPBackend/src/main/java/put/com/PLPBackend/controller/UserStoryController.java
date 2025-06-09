@@ -32,19 +32,24 @@ public class UserStoryController {
         return userStoryService.saveUserStory(userStory);
     }
 
+    @MessageMapping("/play.updateUserStory/{room}")
+    @SendTo("/topic/userStory/{room}")
+    public UserStory updateUserStory(@Payload UserStory userStory, @DestinationVariable String room) {
+        userStory.setRoomId(room);
+        return userStoryService.modifyUserStory(userStory.getId(), userStory.getTitle(), userStory.getDescription());
+    }
+        
+
     @MessageMapping("/play.deleteUserStory/{room}")
     @SendTo("/topic/userStory/{room}")
-    public UserStory deleteUserStory(UserStory userStory, @DestinationVariable String room) {
+    public UserStory deleteUserStory(@Payload UserStory userStory, @DestinationVariable String room) {
         Long id = userStory.getId();
-        
-        System.out.println("id = " + id);
         UserStory deletedStory = new UserStory();
         deletedStory.setId(id);
         deletedStory.setTitle(null);
         userStoryService.deleteUserStory(id);
 
-        System.out.println("Deleted user story with ID: " + deletedStory.getId());
-        System.out.println("Deleted user story: title = " + deletedStory.getTitle() + ", descr = " + deletedStory.getDescription());
+
         return deletedStory;
         
     }
