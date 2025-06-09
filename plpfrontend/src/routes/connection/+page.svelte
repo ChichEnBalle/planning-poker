@@ -57,7 +57,7 @@
 </script>
 
 <div class="max-w-md mx-auto p-4 bg-white shadow-lg rounded-lg">
-    <h2 class="text-2xl font-semibold mb-4 text-center">
+    <h2 class="text-2xl mb-4 text-center">
         {isRegistering ? 'Create an Account' : 'Login'}
     </h2>
 
@@ -101,5 +101,6 @@
 <style>
     h2 {
         font-family: 'Cal Sans';
+        font-weight: lighter;
     }
 </style>

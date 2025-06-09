@@ -8,8 +8,6 @@
 
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
-
     h1 {
         text-align: center;
         margin-top: 3rem;
