@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForUsers } from '$lib/websocketVote.js';
+    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForUsers, sendEndVoting, listenForEndVoting } from '$lib/websocketVote.js';
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
 
@@ -16,6 +16,16 @@
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
     let userStoriesRef;
+    let allVoted = false;
+    let showHistory = false;
+    let voteHistory: { storyId: number; votes: { userId: number; value: string }[] }[] = [];
+
+    $: votesForStory = votes.filter(v => v.storyId === storyId);
+    $: usersLeftToVote = users.length > 0 && storyId !== -1
+        ? users.filter(u => !votesForStory.some(v => v.userId === u.id)).length
+        : 0;
+    $: allVoted = users.length > 0 && storyId !== -1 && usersLeftToVote === 0;
+
 
     onMount(async () => {
         const storedUser = localStorage.getItem('user');
@@ -72,10 +82,24 @@
                 ];
             }
         });
+
+        listenForEndVoting(room, (data) => {
+            voteHistory = [
+                ...voteHistory,
+                {
+                    storyId: data.storyId,
+                    votes: data.votes.map(v => ({ userId: v.userId, value: v.value }))
+                }
+            ];
+            showHistory = true;
+        });
     });
 
     function getStoryId(cStoryId: number) {
         storyId = cStoryId;
+        showHistory = false;
+        hasVoted = false;
+        selectedCard = null;
     }
 
 
@@ -93,13 +117,20 @@
 			return;
 		}
 
-		
-            
-            sendVote({ userId,storyId, content: selectedCard.value }, room);
-            
-			console.log('Vote enregistré !');
-			hasVoted = true; // Marquer l'utilisateur comme ayant voté
-			
+        if (userId === null) {
+            warningMessage = "Erreur : utilisateur non identifié.";
+            return;
+        }
+
+		votes = [
+            ...votes.filter(vote => vote.userId !== userId || vote.storyId !== storyId),
+            { userId, storyId, value: selectedCard.value }
+        ];
+        
+        sendVote({ userId,storyId, content: selectedCard.value }, room);
+        
+        console.log('Vote enregistré !');
+        hasVoted = true; // Marquer l'utilisateur comme ayant voté
     };
     async function register(): Promise<boolean> {
         const res = await fetch('http://localhost:8080/api/users/register?roomId=' + room, {
@@ -146,21 +177,20 @@
 
     async function logout() {
         if (userId !== null) {
-        votes.forEach(vote => {
-            if (vote.userId === userId) {
-                sendUnvote(userId, vote.storyId, room);
-            }
-        });
+            votes.forEach(vote => {
+                if (vote.userId === userId) {
+                    sendUnvote(userId, vote.storyId, room);
+                }
+            });
 
-        localStorage.removeItem('user');
-        localStorage.removeItem('username');
-        localStorage.removeItem('room');
+            localStorage.removeItem('user');
+            localStorage.removeItem('username');
+            localStorage.removeItem('room');
 
-        await fetch(`http://localhost:8080/api/users?userId=${userId}&roomId=${room}`, {
-            method: 'DELETE'
-        });
-    }
-
+            await fetch(`http://localhost:8080/api/users?userId=${userId}&roomId=${room}`, {
+                method: 'DELETE'
+            });
+        }
 		localStorage.removeItem('user');
 		user = null;
 		userId = null;
@@ -171,6 +201,10 @@
         room = '';
         hasJoined = false;
 	}
+
+    function endVoting() {
+        sendEndVoting(room, storyId, votes.filter(v => v.storyId === storyId));
+    }
     
     import { fade } from 'svelte/transition';
 	import Card from '../../components/Card.svelte';
@@ -218,64 +252,88 @@
         </div>
         <Participants {users} />
 
-        <UserStories bind:this={userStoriesRef} {getStoryId} {room}/>
+        <UserStories
+            bind:this={userStoriesRef}
+            {getStoryId}
+            {room}
+            {voteHistory}
+            {showHistory}
+            {storyId}
+            {users}
+        />
         {#if storyId != -1}
             <p class="text-center">User story number {storyId} selected.</p>
             <div class="card-deck">
-                {#if !hasVoted}
-                    <h2>Select a Card</h2>
-                    <div class="cards">
-                        {#each cards as card (card.id)}
-                            <Card value={card.value} selected={selectedCard?.id === card.id} onSelect={() => (selectedCard = card)} />
-                        {/each}
-                    </div>
-
-                    <!-- If they have already voted, they can see the votes of all users. -->
-                    {#if selectedCard}
-                        <p>You selected: {selectedCard.value}</p>
-                        <button 
-                            on:click={handleSendVote}
-                            class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
-                        >
-                            Submit Vote
-                        </button>
-                    {/if}
-
-                {:else}
-                    <!-- Display the selected card and the votes of all users -->
-                    <h2>Votes</h2>
-                    {#if votes.length > 0}
-                    <ul>
-                        {#each votes as vote}
-                            <li>
-                                {#if users.find(u => u.id === vote.userId)}
-                                    {users.find(u => u.id === vote.userId).name}
-                                {:else}
-                                    User {vote.userId}
-                                {/if}
-                                voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                on {userStoriesRef?.getTitle(vote.storyId) ?? vote.storyId}                            </li>
-                        {/each}
-                    </ul>
+                {#if !showHistory}
+                    {#if !hasVoted}
+                        <h2>Select a Card</h2>
+                        <div class="cards">
+                            {#each cards as card (card.id)}
+                                <Card value={card.value} selected={selectedCard?.id === card.id} onSelect={() => (selectedCard = card)} />
+                            {/each}
+                        </div>
+                        {#if selectedCard}
+                            <p>You selected: {selectedCard.value}</p>
+                            <button 
+                                on:click={handleSendVote}
+                                class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                            >
+                                Submit Vote
+                            </button>
+                        {/if}
+                        {#if !allVoted && storyId !== -1}
+                            <div class="text-center text-blue-700 font-semibold my-2">
+                                {usersLeftToVote} participant(s) still need to vote.
+                            </div>
+                        {/if}
                     {:else}
-                        <p>No votes yet.</p>
-                    {/if}
+                        <!-- Display the selected card and the votes of all users -->
+                        <h2>Votes</h2>
+                        {#if votes.filter(v => v.storyId === storyId).length > 0}
+                            <ul>
+                                {#each votes.filter(v => v.storyId === storyId) as vote}
+                                    <li>
+                                        {#if users.find(u => u.id === vote.userId)}
+                                            {users.find(u => u.id === vote.userId).name}
+                                        {:else}
+                                            User {vote.userId}
+                                        {/if}
+                                        voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
+                                        on {userStoriesRef?.getTitle(vote.storyId) ?? vote.storyId}
+                                    </li>
+                                {/each}
+                            </ul>
+                        {:else}
+                            <p>No votes yet.</p>
+                        {/if}
 
-                    <!-- Return to selection of card if you want to change your vote. -->
-                    <button 
-                        on:click={() => {
-                            if (userId && room) {
-                                sendUnvote(userId, storyId, room); // 42 est l'id de ta story fixe
-                            }
-                            hasVoted = false;
-                            selectedCard = null;
-                        }}
-                        class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
-                    >
-                        Return to selection
-                    </button>
-                    
-                    
+                        <button 
+                            on:click={() => {
+                                if (userId && room) {
+                                    sendUnvote(userId, storyId, room);
+                                }
+                                hasVoted = false;
+                                selectedCard = null;
+                            }}
+                            class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                        >
+                            Return to selection
+                        </button>
+
+                        {#if allVoted && storyId !== -1}
+                            <div class="text-center text-green-700 font-bold my-4">
+                                All participants have voted! Voting is over.
+                            </div>
+
+                            <button
+                                on:click={endVoting}
+                                class="mt-4 bg-blue-700 text-white py-2 px-4 rounded hover:bg-blue-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                                type="button"
+                            >
+                                End Voting & Show History
+                            </button>
+                        {/if}
+                    {/if}
                 {/if}
             </div>
         {/if}
