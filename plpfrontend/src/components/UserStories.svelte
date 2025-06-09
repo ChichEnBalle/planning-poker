@@ -153,7 +153,7 @@
 
 
     onMount(() => {
-        listenForUserStories(async (newUserStory) => {
+        listenForUserStories( (newUserStory) => {
             console.log('New user story received:', newUserStory);  
             if (newUserStory.title === null) {
                 console.log('Deleting la user story:', newUserStory +" id "+ newUserStory.id);

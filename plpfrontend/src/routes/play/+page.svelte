@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes } from '$lib/websocketVote.js';
+    import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForShowVotes, showVotesWS} from '$lib/websocketVote.js';
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
 
@@ -15,6 +15,9 @@
     let selected = false;
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
+    let showVotes = false;
+    let adminId: number | null = null; 
+
 
     onMount(async () => {
         const storedUser = localStorage.getItem('user');
@@ -31,6 +34,13 @@
             room = storedRoom;
             hasJoined = true;
             connectWebSocket(username, room);
+
+            const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+            if (res.ok) {
+                const roomData = await res.json();
+                adminId = roomData.adminId;
+                console.log("Room found:", room + " with adminId: " + adminId);
+            }
         }
 
         listenForVotes(async (newVote) => {
@@ -55,6 +65,10 @@
                 ];
             }
         });
+        listenForShowVotes((msg) => {
+            showVotes = msg.showVotes;
+        });
+        
     });
 
     function getStoryId(cStoryId: number) {
@@ -108,10 +122,22 @@
             console.log(username, room);
             if(await register()){
                 connectWebSocket(username, room);
+                await fetch('http://localhost:8080/api/rooms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: room, adminId: userId })
+                });
                 hasJoined = true;
                 
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
+
+                const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+                if (res.ok) {
+                    const roomData = await res.json();
+                    adminId = roomData.adminId;
+                    console.log("Room found:", room + " with adminId: " + adminId);
+                }
             }
             else {
                 alert("Username is already taken.");
@@ -222,19 +248,35 @@
                     <!-- Display the selected card and the votes of all users -->
                     <h2>Votes</h2>
                     {#if votes.length > 0}
-                    <ul>
-                        {#each votes as vote}
-                            <li>
-                                {#if users.find(u => u.id === vote.userId)}
-                                    {users.find(u => u.id === vote.userId).name}
-                                {:else}
-                                    User {vote.userId}
-                                {/if}
-                                voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                on {vote.storyId}
-                            </li>
-                        {/each}
-                    </ul>
+                        {#if showVotes}
+
+                            <ul>
+                                {#each votes as vote}
+                                    <li>
+                                        {#if users.find(u => u.id === vote.userId)}
+                                            {users.find(u => u.id === vote.userId).name}
+                                        {:else}
+                                            User {vote.userId}
+                                        {/if}
+                                        voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
+                                        on {vote.storyId}
+                                    </li>
+                                {/each}
+                            </ul>
+                            {#if userId === adminId}
+                                <button 
+                                    on:click={() => showVotesWS(room, false)}
+                                    class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">
+                                    Hide votes
+                                </button>
+                            {/if}
+                        {:else}
+                            {#if userId === adminId}
+                                <button 
+                                    on:click={() => showVotesWS(room, true)}
+                                    class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer">Show votes</button>
+                            {/if}
+                        {/if}
                     {:else}
                         <p>No votes yet.</p>
                     {/if}
