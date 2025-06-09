@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,12 +23,21 @@ import put.com.PLPBackend.service.UserService;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
-
+	
 	private final UserService userService;
-
-	@GetMapping("{id}")
-	public ResponseEntity<User> getUserById(@PathVariable Long id) {
-		return this.userService.getUserById(id);
+	
+	// @GetMapping("{id}")
+	// public ResponseEntity<User> getUserById(@PathVariable Long id) {
+	// 	return this.userService.getUserById(id);
+	// }
+	
+	@GetMapping("/current")
+	public User getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+		// Delete "Bearer " prefixe of the token
+		System.out.println("Authorization Header : " + authHeader);
+		String token = authHeader.replace("Bearer ", "");
+		System.out.println("Token reçu : " + token);
+		return userService.getUserFromToken(token);
 	}
 
 	@PostMapping("/register")

@@ -4,6 +4,7 @@
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
 	import Card from '../../components/Card.svelte';
+	import { goto } from '$app/navigation';
 
 
     let username = '';
@@ -17,18 +18,41 @@
     let hasJoined = false;
 
     onMount(async () => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            user = JSON.parse(storedUser);
-            username = user.username;
-            userId = user.id;
+        const storedToken = localStorage.getItem('token');
+        console.log("Token envoyé :", storedToken);
+        if (!storedToken) {
+            goto('/connection');
+        }
+        else {
+            try {
+                // Récupérer les informations de l'utilisateur à partir du token
+                const res = await fetch('http://localhost:8080/api/users/current', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${storedToken}`
+                    }
+                });
+
+                if (res.ok) {
+                    user = await res.json();
+                    username = user.username;
+                    userId = user.id;
+
+                    localStorage.setItem('user', JSON.stringify(user));
+                } else {
+                    const error = await res.json();
+                    console.error("Failed to fetch user info from token :", error.message);
+                    goto('/connection');
+                }
+            } catch (err) {
+                console.error("Error fetching user info:", err);
+                goto('/connection');
+            }
         }
 
         const storedUsername = localStorage.getItem('username');
-        const storedRoom = localStorage.getItem('room');
-        if (storedUsername && storedRoom) {
-            username = storedUsername;
-            room = storedRoom;
+        if (storedUsername ) {
+            username = storedUsername;;
             hasJoined = true;
             connectWebSocket(username, room);
         }
@@ -79,43 +103,17 @@
         hasVoted = true; // La gestion de hasVoted est à revoir, il faudrait savoir sur quelle userstory un user a voté
     };
 
-    async function register(): Promise<boolean> {
-        const res = await fetch('http://localhost:8080/api/users/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username })
-        });
-
-        if (res.ok) {
-            user = await res.json();
-            userId = user?.id ?? null;
-            localStorage.setItem('user', JSON.stringify(user));
-            return true;
-        }
-
-        return false;
-    }
-
-    async function handleJoinRoom (cUsername: string, cRoom: string){
-        username = cUsername;
+    async function handleJoinRoom (cRoom: string){
         room = cRoom;
-        if (username.trim() && room.trim()) {
-            console.log(username, room);
-            if(await register()){
-                connectWebSocket(username, room);
-                hasJoined = true;
-                
-                localStorage.setItem('username', username);
-                localStorage.setItem('room', room);
-            }
-            else {
-                alert("Username is already taken.");
-            }
+        if (room.trim() ) {
+            console.log(room);
+            connectWebSocket(username, room);
+            hasJoined = true;
+            localStorage.setItem('room', room);
         } else {
-            alert("Username and room must be filled!");
+            alert("Room name must be filled!");
         }
     };
-
 
     async function logout() {
         if (userId !== null) {
@@ -126,16 +124,16 @@
             });
 
             localStorage.removeItem('user');
-            localStorage.removeItem('username');
+            localStorage.removeItem('token');
             localStorage.removeItem('room');
 
-            // Supprimer l'utilisateur du serveur si nécessaire
-            await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
-                method: 'DELETE'
-            });
-        }
+            goto('/connection');
 
-		localStorage.removeItem('user');
+            // Supprimer l'utilisateur du serveur si nécessaire
+            // await fetch(`http://localhost:8080/api/users?userId=${userId}`, {
+            //     method: 'DELETE'
+            // });
+        }
 		user = null;
 		userId = null;
 		hasVoted = false;
@@ -176,8 +174,17 @@
 
 <div class=" mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-4xl font-semibold mb-4 text-center">Planning Pocker</h2>
-    {#if !username || !room || !hasJoined}
-        <Login {handleJoinRoom}></Login>
+    {#if !hasJoined}
+        <div>
+            <h3 class="text-xl mb-4">Join a Room</h3>
+            <input type="text" bind:value={room} placeholder="Room Name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+            <button 
+                on:click={() => handleJoinRoom(room)} 
+                class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+            >
+                Join Room
+            </button>
+        </div>
     {:else}
         <div class="flex justify-between items-center">
             <h2 class="text-2xl">Welcome to room {room}, {username}</h2>

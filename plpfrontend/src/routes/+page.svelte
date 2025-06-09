@@ -4,7 +4,7 @@
 
 <h1>{message}</h1>
 
-<button class="button-play" on:click={() => window.location.href = '/play'}>Play</button>
+<button class="button-play" onclick={() => window.location.href = '/connection'}>Play</button>
 
 
 <style>

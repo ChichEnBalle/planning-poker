@@ -1,6 +1,7 @@
 package put.com.PLPBackend.service;
 
 import java.util.List;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Optional;
 
@@ -21,7 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final SecretKey jwtSecret = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private final SecretKey jwtSecret = Keys.hmacShaKeyFor("la_sécurité_est_primordiale_avant_tout_donc_il_faut_que_elle_ait_une_sacrée_taille".getBytes(StandardCharsets.UTF_8));
     private final long jwtExpirationMs = 86400000; // 24h
 
     public UserService(UserRepository userRepository) {
@@ -72,5 +73,31 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public String getUsernameFromToken(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(jwtSecret)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject(); // "subject" = username
+        } catch (Exception e) {
+            System.err.println("Error when getting username from token : " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public User getUserFromToken(String token) {
+        try {
+            String username = getUsernameFromToken(token);
+            System.out.println("Username extrait du token : " + username);
+            return userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération de l'utilisateur à partir du token : " + e.getMessage());
+            throw e;
+        }
     }
 }
