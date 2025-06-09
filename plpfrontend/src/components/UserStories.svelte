@@ -39,9 +39,6 @@
         }
         addUserStory({title : importedTitle, description : importedDesc, estimation:importedEstimation},room);
 
-        
-
-        
     }
 
     async function addTaskToUserStory(id: number) {
@@ -66,8 +63,8 @@
 
 
     function deleteUS(ustory) {
-        deleteUserStory(ustory);
-        userStories = userStories.filter(story => story.id !== ustory.id);
+        deleteUserStory(ustory, room);
+        //userStories = userStories.filter(story => story.id !== ustory.id);
     }
 
     function handleFileUpload(event) {
