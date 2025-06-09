@@ -20,7 +20,6 @@ public class UserStory{
 
 
     @ElementCollection
-    @JsonIgnore
     private List<String> tasks = new ArrayList<>();
     @ElementCollection
     @JsonIgnore

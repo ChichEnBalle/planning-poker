@@ -151,6 +151,18 @@ export const updateUserStory = (userStory, room) => {
     }
 };
 
+export const addTaskToUserStoryWS = (userStoryId, task, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.addTaskToUserStory/${room}`,
+            body: JSON.stringify({
+                userStoryId,
+                task
+            }),
+        });
+    }
+};
+
 
 
 

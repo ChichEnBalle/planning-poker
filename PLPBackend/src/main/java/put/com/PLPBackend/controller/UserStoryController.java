@@ -7,6 +7,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
+
+import put.com.PLPBackend.dto.Task;
 import put.com.PLPBackend.model.UserStory;
 import put.com.PLPBackend.service.UserStoryService;
 
@@ -49,8 +51,15 @@ public class UserStoryController {
         deletedStory.setTitle(null);
         userStoryService.deleteUserStory(id);
 
-
         return deletedStory;
         
+    }
+
+    @MessageMapping("/play.addTaskToUserStory/{room}")
+    @SendTo("/topic/userStory/{room}")
+    public UserStory addTaskToUserStory(@Payload Task message, @DestinationVariable String room) {
+        System.out.println("Adding task to user story: " + message.getTask() + " for user story ID: " + message.getUserStoryId());
+        UserStory updated = userStoryService.addTaskToUserStory(message.getUserStoryId(), message.getTask());
+        return updated;
     }
 }

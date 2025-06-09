@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes, updateUserStory} from "$lib/websocketVote.js";
+    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes, updateUserStory, addTaskToUserStoryWS} from "$lib/websocketVote.js";
 
     let userStories: any[] = $state([]);
     let newTitle = $state('');
@@ -43,21 +43,11 @@
 
     async function addTaskToUserStory(id: number) {
         const story = userStories.find(story => story.id === id);
-        if (story) {
-            console.log(`Adding task "${story.newTask}" to user story with ID ${id}`);
-            const response = await fetch(`http://localhost:8080/api/user-stories/${id}/tasks`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(story.newTask)
-            });
-
-            if (response.ok) {
-                const updatedStory = await response.json();
-                story.tasks = updatedStory.tasks;
-                story.newTask = '';
-            } else {
-                console.error('Failed to add task');
-            }
+        if (story && story.newTask) {
+            console.log('Adding task to user story:', story.id, story.newTask);
+            addTaskToUserStoryWS(id, story.newTask, room);
+            story.newTask = '';
+            
         }
     }
 
