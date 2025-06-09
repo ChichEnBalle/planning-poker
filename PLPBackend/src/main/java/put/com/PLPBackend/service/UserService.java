@@ -15,9 +15,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> getUsersByRoom(String roomId) {
-        return userRepository.findByRoomId(roomId);
-    }
+    
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
