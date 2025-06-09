@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import put.com.PLPBackend.model.User;
 import put.com.PLPBackend.repository.UserRepository;
 import put.com.PLPBackend.model.Room;
+import put.com.PLPBackend.dto.ShowVotesMessage;
 import put.com.PLPBackend.dto.VoteRequest;
 import put.com.PLPBackend.service.RoomService;
 import put.com.PLPBackend.service.VoteService;
@@ -88,6 +89,14 @@ public class VoteController {
         unvoteNotification.setValue(null); // null signifie suppression du vote côté frontend
 
         return unvoteNotification;
+    }
+
+    @MessageMapping("/play.showVotes/{room}")
+    @SendTo("/topic/showVotes/{room}")
+    public ShowVotesMessage showVotes(@DestinationVariable String room, @Payload ShowVotesMessage message) {
+        message.setRoom(room);
+        System.out.println("Show votes triggered for room: " + room);
+        return message;
     }
 
 

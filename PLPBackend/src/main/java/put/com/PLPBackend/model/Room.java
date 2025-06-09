@@ -11,6 +11,7 @@ public class Room {
     @GeneratedValue
     private Long id;
     private String name;
+    private Long adminId;
 
     @ManyToMany
     @JoinTable(
