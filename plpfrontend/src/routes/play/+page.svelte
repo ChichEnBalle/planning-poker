@@ -5,6 +5,8 @@
 
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
+    import Card from '../../components/Card.svelte';
+	import Participants from '../../components/Participants.svelte';
 
 
 
@@ -19,15 +21,14 @@
     let hasJoined = false;
 
     let userStoriesRef;
-    let allVoted = false;
     let showHistory = false;
     let voteHistory: { storyId: number; votes: { userId: number; value: string }[] }[] = [];
 
-    $: votesForStory = votes.filter(v => v.storyId === storyId);
-    $: usersLeftToVote = users.length > 0 && storyId !== -1
+    let votesForStory = votes.filter(v => v.storyId === storyId);
+    let usersLeftToVote = users.length > 0 && storyId !== -1
         ? users.filter(u => !votesForStory.some(v => v.userId === u.id)).length
         : 0;
-    $: allVoted = users.length > 0 && storyId !== -1 && usersLeftToVote === 0;
+    let allVoted = users.length > 0 && storyId !== -1 && usersLeftToVote === 0;
 
     let showVotes = false;
     let adminId: number | null = null; 
@@ -185,9 +186,10 @@
                 localStorage.setItem('room', room);
 
 
-                const res = await fetch(`http://localhost:8080/api/users/room/${room}`);
-                if (res.ok) {
-                    users = await res.json();
+                const resUsr = await fetch(`http://localhost:8080/api/users/room/${room}`);
+                if (resUsr.ok) {
+                    users = await resUsr.json();
+                }
 
                 const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
                 if (res.ok) {
@@ -237,9 +239,8 @@
         sendEndVoting(room, storyId, votes.filter(v => v.storyId === storyId));
     }
     
-    import { fade } from 'svelte/transition';
-	import Card from '../../components/Card.svelte';
-	import Participants from '../../components/Participants.svelte';
+    
+	
 
 	let hasVoted = false;
 
@@ -317,7 +318,9 @@
                                 {usersLeftToVote} participant(s) still need to vote.
                             </div>
                         {/if}
+                        
                     {:else}
+                    
                         <!-- Display the selected card and the votes of all users -->
                         <h2>Votes</h2>
                         {#if votes.filter(v => v.storyId === storyId).length > 0}
@@ -363,6 +366,8 @@
                                 End Voting & Show History
                             </button>
                         {/if}
+                    {/if}
+                        
                 {:else}
                     <!-- Display the selected card and the votes of all users -->
                     <h2>Votes</h2>
