@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes } from '$lib/websocketVote.js';
-    import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
 	import Card from '../../components/Card.svelte';
 	import { goto } from '$app/navigation';

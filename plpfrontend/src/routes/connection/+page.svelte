@@ -76,7 +76,11 @@
     </div>
 
     <button 
-        onclick={handleSubmit} 
+        onclick={async () => {
+            await handleSubmit();
+            username = '';
+            password = '';
+        }}
         class="w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
     >
         {isRegistering ? 'Register' : 'Login'}
@@ -84,7 +88,11 @@
 
     <p class="mt-4 text-center text-sm">
         {isRegistering ? 'Already have an account?' : "Don't have an account?"}
-        <a href="#" onclick={() => (isRegistering = !isRegistering)} class="text-blue-500 hover:underline">
+        <a href="#" onclick={() => {
+            isRegistering = !isRegistering;
+            username='';
+            password='';
+        }} class="text-blue-500 hover:underline">
             {isRegistering ? 'Login' : 'Register'}
         </a>
     </p>
