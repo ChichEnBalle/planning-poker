@@ -1,5 +1,6 @@
 package put.com.PLPBackend.controller;
 
+import java.nio.file.AccessDeniedException;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +68,7 @@ public class VoteController {
       
         // Ajouter l'utilisateur à la room
         currentRoom.getUsers().add(u);
-        //roomRepository.save(currentRoom); // Sauvegarder la room
+        roomService.saveRoom(currentRoom); // Sauvegarder la room
 
         return userRepository.save(u);
     }
@@ -93,9 +94,15 @@ public class VoteController {
 
     @MessageMapping("/play.showVotes/{room}")
     @SendTo("/topic/showVotes/{room}")
-    public ShowVotesMessage showVotes(@DestinationVariable String room, @Payload ShowVotesMessage message) {
+    public ShowVotesMessage showVotes(@DestinationVariable String room, @Payload ShowVotesMessage message) throws AccessDeniedException {
+        Room r = roomService.getOrCreateRoom(room); 
+        Long adminId = r.getAdminId();
+        Long senderId = Long.valueOf(message.getUserId()); 
+
+        if (!adminId.equals(senderId)) {
+            throw new AccessDeniedException("User is not admin.");
+        }
         message.setRoom(room);
-        System.out.println("Show votes triggered for room: " + room);
         return message;
     }
 

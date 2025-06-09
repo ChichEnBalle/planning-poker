@@ -42,5 +42,8 @@ public class RoomService {
         room.setName(roomName);
         room.setAdminId(adminId);
         return roomRepository.save(room);
-}
+    }
+    public Room saveRoom(Room room) {
+        return roomRepository.save(room);
+    }
 }

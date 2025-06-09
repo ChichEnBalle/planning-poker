@@ -12,11 +12,11 @@
     let userId: number | null = null;
     let users: { id: number; name: string }[] = [];
     let storyId = -1; // ID de la story fixe
-    let selected = false;
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
     let showVotes = false;
     let adminId: number | null = null; 
+    let activeUsers: { name: string }[] = [];
 
 
     onMount(async () => {
@@ -39,6 +39,10 @@
             if (res.ok) {
                 const roomData = await res.json();
                 adminId = roomData.adminId;
+                if (roomData.users) {
+                    users = roomData.users;
+                    console.log("il y a ça au on mount", users);
+                }
                 console.log("Room found:", room + " with adminId: " + adminId);
             }
         }
@@ -64,6 +68,19 @@
                     newVote
                 ];
             }
+            const votesForCurrentStory = votes.filter(v => v.storyId === storyId);
+            console.log("Votes for current story:", votesForCurrentStory);
+            console.log("Users in room:", users);
+            console.log("Active users:", activeUsers);
+            if (
+                votesForCurrentStory.length === activeUsers.length &&
+                activeUsers.length > 0 &&
+                !showVotes // évite de renvoyer plusieurs fois
+            ) {
+                
+                showVotesWS(room, true, userId);
+                
+            }
         });
         listenForShowVotes((msg) => {
             showVotes = msg.showVotes;
@@ -74,6 +91,7 @@
     function getStoryId(cStoryId: number) {
         storyId = cStoryId;
     }
+
 
 
 
@@ -89,15 +107,9 @@
 			setTimeout(() => (warningMessage = null), 3000);
 			return;
 		}
-
-		
-            
             sendVote({ userId,storyId, content: selectedCard.value }, room);
-            
-			console.log('Vote enregistré !');
-			hasVoted = true; // Marquer l'utilisateur comme ayant voté
-			
-    };
+			hasVoted = true; 
+        };
     async function register(): Promise<boolean> {
         const res = await fetch('http://localhost:8080/api/users/register', {
             method: 'POST',
@@ -128,16 +140,24 @@
                     body: JSON.stringify({ name: room, adminId: userId })
                 });
                 hasJoined = true;
+                activeUsers.push({ name: username });
+                console.log("Active Users in room:", users);
                 
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
 
                 const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+                
                 if (res.ok) {
                     const roomData = await res.json();
                     adminId = roomData.adminId;
+                    if (roomData.users) {
+                        users = roomData.users;
+                        console.log("Users in room:", users);
+                    }
                     console.log("Room found:", room + " with adminId: " + adminId);
                 }
+                
             }
             else {
                 alert("Username is already taken.");
@@ -175,6 +195,7 @@
         username = '';
         room = '';
         hasJoined = false;
+        showVotes = false;
 	}
     
     import { fade } from 'svelte/transition';
@@ -265,7 +286,7 @@
                             </ul>
                             {#if userId === adminId}
                                 <button 
-                                    on:click={() => showVotesWS(room, false)}
+                                    on:click={() => showVotesWS(room, false, userId)}
                                     class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">
                                     Hide votes
                                 </button>
@@ -273,7 +294,7 @@
                         {:else}
                             {#if userId === adminId}
                                 <button 
-                                    on:click={() => showVotesWS(room, true)}
+                                    on:click={() => showVotesWS(room, true, userId)}
                                     class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer">Show votes</button>
                             {/if}
                         {/if}

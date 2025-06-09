@@ -19,7 +19,7 @@ public class RoomController {
     @GetMapping("/{name}")
     public Room getRoomByName(@PathVariable String name) {
         Room room = roomService.getOrCreateRoom(name);
-        System.out.println("Admin de la room" +room.getName()+"est" +room.getAdminId());
+        System.out.println("Admin de la room " +room.getName()+" est " +room.getAdminId());
         return room;
 
     }

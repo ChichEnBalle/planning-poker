@@ -103,11 +103,12 @@ export const addUser = (user, room) => {
     }
 };
 
-export const showVotesWS = (room, showVotes) => {
+export const showVotesWS = (room, showVotes,userId) => {
+    console.log('showVotesWS called with:', room, showVotes, userId);
     if (client && client.connected) {
         client.publish({
             destination: `/app/play.showVotes/${room}`,
-            body: JSON.stringify({ room, showVotes }),
+            body: JSON.stringify({ room, showVotes, userId }),
         });
     }
 };
@@ -126,6 +127,7 @@ export const listenForUserStories = (callback) => {
     userStoriesCallback = callback;
 };
 
+// @ts-ignore
 export const listenForShowVotes = (callback) => {
     console.log('Setting up showVotes callback');
     showVotesCallback = callback;
