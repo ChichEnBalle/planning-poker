@@ -16,6 +16,7 @@
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
     let showVotes = false;
+    let adminId: number | null = null; 
 
 
     onMount(async () => {
@@ -33,6 +34,13 @@
             room = storedRoom;
             hasJoined = true;
             connectWebSocket(username, room);
+
+            const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+            if (res.ok) {
+                const roomData = await res.json();
+                adminId = roomData.adminId;
+                console.log("Room found:", room + " with adminId: " + adminId);
+            }
         }
 
         listenForVotes(async (newVote) => {
@@ -60,13 +68,7 @@
         listenForShowVotes((msg) => {
             showVotes = msg.showVotes;
         });
-        if (room) {
-            const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
-            if (res.ok) {
-                const roomData = await res.json();
-                adminId = roomData.adminId;
-            }
-        }
+        
     });
 
     function getStoryId(cStoryId: number) {
@@ -120,10 +122,22 @@
             console.log(username, room);
             if(await register()){
                 connectWebSocket(username, room);
+                await fetch('http://localhost:8080/api/rooms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: room, adminId: userId })
+                });
                 hasJoined = true;
                 
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
+
+                const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+                if (res.ok) {
+                    const roomData = await res.json();
+                    adminId = roomData.adminId;
+                    console.log("Room found:", room + " with adminId: " + adminId);
+                }
             }
             else {
                 alert("Username is already taken.");
@@ -249,7 +263,7 @@
                                     </li>
                                 {/each}
                             </ul>
-                            {#if userId === room.adminId}
+                            {#if userId === adminId}
                                 <button 
                                     on:click={() => showVotesWS(room, false)}
                                     class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">

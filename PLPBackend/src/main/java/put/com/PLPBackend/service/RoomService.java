@@ -32,4 +32,15 @@ public class RoomService {
         roomRepository.save(room);  // Sauvegarder la room mise à jour
         return room;
     }
+
+    public Room createRoom(String roomName, Long adminId) {
+        Room existing = roomRepository.findByName(roomName);
+        if (existing != null) {
+            throw new IllegalArgumentException("Room already exists");
+        }
+        Room room = new Room();
+        room.setName(roomName);
+        room.setAdminId(adminId);
+        return roomRepository.save(room);
+}
 }

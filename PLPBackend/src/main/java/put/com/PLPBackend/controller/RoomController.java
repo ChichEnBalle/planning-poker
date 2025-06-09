@@ -5,6 +5,8 @@ import put.com.PLPBackend.model.Room;
 
 import put.com.PLPBackend.service.RoomService;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/rooms")
 public class RoomController {
@@ -16,7 +18,17 @@ public class RoomController {
 
     @GetMapping("/{name}")
     public Room getRoomByName(@PathVariable String name) {
-        return roomService.getOrCreateRoom(name);
+        Room room = roomService.getOrCreateRoom(name);
+        System.out.println("Admin de la room" +room.getName()+"est" +room.getAdminId());
+        return room;
 
     }
+
+    @PostMapping
+    public Room createRoom(@RequestBody Map<String, Object> payload) {
+        String roomName = (String) payload.get("name");
+        Long adminId = Long.valueOf(payload.get("adminId").toString());
+        return roomService.createRoom(roomName, adminId);
+    }
+
 }
