@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes} from "$lib/websocketVote.js";
+    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes, updateUserStory, addTaskToUserStoryWS} from "$lib/websocketVote.js";
 
     let userStories: any[] = $state([]);
     let newTitle = $state('');
@@ -51,21 +51,11 @@
 
     async function addTaskToUserStory(id: number) {
         const story = userStories.find(story => story.id === id);
-        if (story) {
-            console.log(`Adding task "${story.newTask}" to user story with ID ${id}`);
-            const response = await fetch(`http://localhost:8080/api/user-stories/${id}/tasks`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(story.newTask)
-            });
-
-            if (response.ok) {
-                const updatedStory = await response.json();
-                story.tasks = updatedStory.tasks;
-                story.newTask = '';
-            } else {
-                console.error('Failed to add task');
-            }
+        if (story && story.newTask) {
+            console.log('Adding task to user story:', story.id, story.newTask);
+            addTaskToUserStoryWS(id, story.newTask, room);
+            story.newTask = '';
+            
         }
     }
 
@@ -136,24 +126,12 @@
     }
 
     async function modifyUserStory(id: number, updatedTitle: string, updatedDescription: string) {
-        try {
-            const response = await fetch(`http://localhost:8080/api/user-stories/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: updatedTitle, description: updatedDescription })
-            });
-
-            if (response.ok) {
-                const updatedStory = await response.json();
-                userStories = userStories.map(story =>
-                    story.id === id ? updatedStory : story
-                );
-                console.log('User story updated:', updatedStory);
-            } else {
-                console.error('Failed to update user story');
-            }
-        } catch (error) {
-            console.error('Error updating user story:', error);
+        const story = userStories.find(s => s.id === id);
+        if (story) {
+            updateUserStory(
+                { ...story, title: updatedTitle, description: updatedDescription },
+                room
+            );
         }
     }
 
@@ -183,15 +161,23 @@
 
 
     onMount(() => {
-        listenForUserStories(async (newUserStory) => {
+        listenForUserStories( (newUserStory) => {
             console.log('New user story received:', newUserStory);  
             if (newUserStory.title === null) {
                 console.log('Deleting la user story:', newUserStory +" id "+ newUserStory.id);
                 userStories = userStories.filter(userStory => userStory.id !== newUserStory.id);
-            } else {
-                userStories = [...userStories, newUserStory];
-                console.log('New user story:', newUserStory);
+                return;
             } 
+            const idx = userStories.findIndex(s => s.id === newUserStory.id);
+            if (idx !== -1) { // If the story already exists, update it
+                console.log('Updating user story:', newUserStory);
+                userStories[idx] = newUserStory; 
+                userStories = [...userStories];  
+            } else { // If the story doesn't exist, add it
+                console.log('Adding new user story:', newUserStory);
+                userStories = [...userStories, newUserStory]; 
+            }
+            console.log('Updated user stories:', userStories);
         });
     });
 

@@ -7,6 +7,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
+
+import put.com.PLPBackend.dto.Task;
 import put.com.PLPBackend.model.UserStory;
 import put.com.PLPBackend.service.UserStoryService;
 
@@ -32,20 +34,32 @@ public class UserStoryController {
         return userStoryService.saveUserStory(userStory);
     }
 
+    @MessageMapping("/play.updateUserStory/{room}")
+    @SendTo("/topic/userStory/{room}")
+    public UserStory updateUserStory(@Payload UserStory userStory, @DestinationVariable String room) {
+        userStory.setRoomId(room);
+        return userStoryService.modifyUserStory(userStory.getId(), userStory.getTitle(), userStory.getDescription());
+    }
+        
+
     @MessageMapping("/play.deleteUserStory/{room}")
     @SendTo("/topic/userStory/{room}")
-    public UserStory deleteUserStory(UserStory userStory, @DestinationVariable String room) {
+    public UserStory deleteUserStory(@Payload UserStory userStory, @DestinationVariable String room) {
         Long id = userStory.getId();
-        
-        System.out.println("id = " + id);
         UserStory deletedStory = new UserStory();
         deletedStory.setId(id);
         deletedStory.setTitle(null);
         userStoryService.deleteUserStory(id);
 
-        System.out.println("Deleted user story with ID: " + deletedStory.getId());
-        System.out.println("Deleted user story: title = " + deletedStory.getTitle() + ", descr = " + deletedStory.getDescription());
         return deletedStory;
         
+    }
+
+    @MessageMapping("/play.addTaskToUserStory/{room}")
+    @SendTo("/topic/userStory/{room}")
+    public UserStory addTaskToUserStory(@Payload Task message, @DestinationVariable String room) {
+        System.out.println("Adding task to user story: " + message.getTask() + " for user story ID: " + message.getUserStoryId());
+        UserStory updated = userStoryService.addTaskToUserStory(message.getUserStoryId(), message.getTask());
+        return updated;
     }
 }

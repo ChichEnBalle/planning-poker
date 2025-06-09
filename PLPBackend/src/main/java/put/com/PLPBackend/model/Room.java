@@ -11,6 +11,7 @@ public class Room {
     @GeneratedValue
     private Long id;
     private String name;
+    private Long adminId;
 
     @ManyToMany
     @JoinTable(
@@ -22,8 +23,11 @@ public class Room {
     public Long getId() { return id; }
     public String getName() { return name; }
     public Set<User> getUsers() { return users; }
+    public Long getAdminId() { return adminId; }
 
     public void setId(Long id) { this.id = id; }
     public void setName(String name) { this.name = name; }
     public void setUsers(Set<User> users) { this.users = users; }
+    public void setAdminId(Long adminId) { this.adminId = adminId;}
+    
 }

@@ -4,7 +4,7 @@ import { Client } from '@stomp/stompjs';
 let client = null;
 // @ts-ignore
 let voteCallback = null; // Fonction de callback pour l'écoute des messages
-
+let showVotesCallback = null;
 let userStoriesCallback = null; // Fonction de callback pour l'écoute des messages
 
 export const connectWebSocket = (username, room) => {
@@ -33,6 +33,14 @@ export const connectWebSocket = (username, room) => {
 
                 if (userStoriesCallback) {
                     userStoriesCallback(data);
+                }
+            });
+
+            client.subscribe(`/topic/showVotes/${room}`, (message) => {
+                const data = JSON.parse(message.body);
+                console.log('Received showVotes message:', data);
+                if (showVotesCallback) {
+                    showVotesCallback(data);
                 }
             });
         },
@@ -95,6 +103,15 @@ export const addUser = (user, room) => {
     }
 };
 
+export const showVotesWS = (room, showVotes) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.showVotes/${room}`,
+            body: JSON.stringify({ room, showVotes }),
+        });
+    }
+};
+
 // Fonction pour écouter les messages entrants
 // @ts-ignore
 export const listenForVotes = (callback) => {
@@ -107,6 +124,11 @@ export const listenForVotes = (callback) => {
 export const listenForUserStories = (callback) => {
     console.log('Setting up message callback for user stories');
     userStoriesCallback = callback;
+};
+
+export const listenForShowVotes = (callback) => {
+    console.log('Setting up showVotes callback');
+    showVotesCallback = callback;
 };
 
 export const addUserStory = (userStory, room) => {
@@ -173,5 +195,28 @@ export function listenForEndVoting(room, callback) {
         }
     });
 }
+
+
+export const updateUserStory = (userStory, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.updateUserStory/${room}`,
+            body: JSON.stringify(userStory),
+        });
+    }
+};
+
+export const addTaskToUserStoryWS = (userStoryId, task, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.addTaskToUserStory/${room}`,
+            body: JSON.stringify({
+                userStoryId,
+                task
+            }),
+        });
+    }
+};
+
 
 
