@@ -176,7 +176,6 @@
         URL.revokeObjectURL(url);
     }
 
-
     onMount(() => {
         listenForUserStories(async (newUserStory) => {
             console.log('New user story received:', newUserStory);  
@@ -314,7 +313,11 @@
                         {story.isEditing ? 'Cancel' : 'Edit'}
                     </button>
                     <button 
-                        onclick={() => deleteUS(story)} 
+                        onclick={() => {
+                            if (window.confirm('Are you sure you want to delete this user story?')) {
+                                deleteUS(story);
+                            }
+                        }} 
                         class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
                         >
                         Delete
