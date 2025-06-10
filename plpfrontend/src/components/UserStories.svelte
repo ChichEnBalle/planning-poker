@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes} from "$lib/websocketVote.js";
+    import {deleteUserStory, addUserStory, listenForUserStories, listenForVotes, updateUserStory, addTaskToUserStoryWS} from "$lib/websocketVote.js";
 
     let userStories: any[] = $state([]);
     let newTitle = $state('');
@@ -11,9 +11,17 @@
     let importedDesc = $state('');
     let fileName = $state('');
     let isFileImported = $state(false);
-    let { getStoryId, room }= $props();
-
     let importedEstimation: number =$state(0);
+
+    const {
+        getStoryId,
+        room,
+        voteHistory = [],
+        showHistory = false,
+        storyId = -1,
+        users = []
+    } = $props();
+
 
     async function fetchUserStories() {
         if (!room) return;
@@ -39,35 +47,22 @@
         }
         addUserStory({title : importedTitle, description : importedDesc, estimation:importedEstimation},room);
 
-        
-
-        
     }
 
     async function addTaskToUserStory(id: number) {
         const story = userStories.find(story => story.id === id);
-        if (story) {
-            console.log(`Adding task "${story.newTask}" to user story with ID ${id}`);
-            const response = await fetch(`http://localhost:8080/api/user-stories/${id}/tasks`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(story.newTask)
-            });
-
-            if (response.ok) {
-                const updatedStory = await response.json();
-                story.tasks = updatedStory.tasks;
-                story.newTask = '';
-            } else {
-                console.error('Failed to add task');
-            }
+        if (story && story.newTask) {
+            console.log('Adding task to user story:', story.id, story.newTask);
+            addTaskToUserStoryWS(id, story.newTask, room);
+            story.newTask = '';
+            
         }
     }
 
 
     function deleteUS(ustory) {
-        deleteUserStory(ustory);
-        userStories = userStories.filter(story => story.id !== ustory.id);
+        deleteUserStory(ustory, room);
+        //userStories = userStories.filter(story => story.id !== ustory.id);
     }
 
     function handleFileUpload(event) {
@@ -131,24 +126,12 @@
     }
 
     async function modifyUserStory(id: number, updatedTitle: string, updatedDescription: string) {
-        try {
-            const response = await fetch(`http://localhost:8080/api/user-stories/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: updatedTitle, description: updatedDescription })
-            });
-
-            if (response.ok) {
-                const updatedStory = await response.json();
-                userStories = userStories.map(story =>
-                    story.id === id ? updatedStory : story
-                );
-                console.log('User story updated:', updatedStory);
-            } else {
-                console.error('Failed to update user story');
-            }
-        } catch (error) {
-            console.error('Error updating user story:', error);
+        const story = userStories.find(s => s.id === id);
+        if (story) {
+            updateUserStory(
+                { ...story, title: updatedTitle, description: updatedDescription },
+                room
+            );
         }
     }
 
@@ -177,17 +160,29 @@
     }
 
     onMount(() => {
-        listenForUserStories(async (newUserStory) => {
+        listenForUserStories( (newUserStory) => {
             console.log('New user story received:', newUserStory);  
             if (newUserStory.title === null) {
                 console.log('Deleting la user story:', newUserStory +" id "+ newUserStory.id);
                 userStories = userStories.filter(userStory => userStory.id !== newUserStory.id);
-            } else {
-                userStories = [...userStories, newUserStory];
-                console.log('New user story:', newUserStory);
+                return;
             } 
+            const idx = userStories.findIndex(s => s.id === newUserStory.id);
+            if (idx !== -1) { // If the story already exists, update it
+                console.log('Updating user story:', newUserStory);
+                userStories[idx] = newUserStory; 
+                userStories = [...userStories];  
+            } else { // If the story doesn't exist, add it
+                console.log('Adding new user story:', newUserStory);
+                userStories = [...userStories, newUserStory]; 
+            }
+            console.log('Updated user stories:', userStories);
         });
     });
+
+    export function getTitle(storyId: number): string | undefined {
+        return userStories.find(story => story.id === storyId)?.title;
+    }
 </script>
 
 <div class="flex flex-col p-7 rounded-xl">
@@ -300,65 +295,86 @@
                     </button>
                 </div>
                 <div class="flex">
-                    <button 
-                    onclick={() => {
-                        story.isEditing = !story.isEditing;
-                        if (story.isEditing) {
-                            story.tempTitle = story.title;
-                            story.tempDescription = story.description;
-                        }
-                    }} 
-                        class="mt-4 mr-1 w-1/2 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
-                        >
-                        {story.isEditing ? 'Cancel' : 'Edit'}
-                    </button>
-                    <button 
+                        <button 
                         onclick={() => {
-                            if (window.confirm('Are you sure you want to delete this user story?')) {
-                                deleteUS(story);
+                            story.isEditing = !story.isEditing;
+                            if (story.isEditing) {
+                                story.tempTitle = story.title;
+                                story.tempDescription = story.description;
                             }
                         }} 
-                        class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
-                        >
-                        Delete
-                    </button>
-                </div>
+                            class="mt-4 mr-1 w-1/2 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                            >
+                            {story.isEditing ? 'Cancel' : 'Edit'}
+                        </button>
+                        <button 
+                            onclick={() => {
+                                if (window.confirm('Are you sure you want to delete this user story?')) {
+                                    deleteUS(story);
+                                }
+                            }} 
+                            class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
+                            Delete
+                        </button>
+                    </div>
 
-                <!-- Edit User Story -->
+                    <!-- Edit User Story -->
                 {#if story.isEditing}
-                <div class="mt-4 text-center">
-                    <input 
-                        type="text" 
-                        bind:value={story.tempTitle} 
-                        placeholder="New Title" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
-                    />
-                    <textarea 
-                        bind:value={story.tempDescription} 
-                        placeholder="New Description" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
-                    ></textarea>
+                  <div class="mt-4 text-center">
+                      <input 
+                          type="text" 
+                          bind:value={story.tempTitle} 
+                          placeholder="New Title" 
+                          class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
+                      />
+                      <textarea 
+                          bind:value={story.tempDescription} 
+                          placeholder="New Description" 
+                          class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
+                      ></textarea>
+                      <button 
+                          onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
+                          class="bg-[#348449] text-white py-1 px-3 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                      >
+                          Save Changes
+                      </button>
+                      </div>
+                    {/if}
+
                     <button 
-                        onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
-                        class="bg-[#348449] text-white py-1 px-3 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
-                    >
-                        Save Changes
+                        onclick={() => getStoryId(story.id)}
+                        class="mt-3 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                        >
+                        Select
                     </button>
+                    <button 
+
+                        onclick={() => exportToCSV(story)} 
+                        class="px-4 py-2 bg-white text-[rgb(51,51,51)] rounded hover:bg-[#348449] hover:text-white transform hover:-translate-y-0.5 transition duration-250 w-full mt-3 border border-black"
+
+                        >
+                            Export to CSV
+                    </button>
+
+
+                    {#if voteHistory && voteHistory.find(h => h.storyId === story.id)}
+                        <div class="mt-4 p-4 bg-gray-100 rounded shadow">
+                            <h2 class="text-xl font-bold mb-2">Game History</h2>
+                            {#each voteHistory.filter(h => h.storyId === story.id) as history}
+                                <div class="mb-4">
+                                    <ul>
+                                        {#each history.votes as v}
+                                            <li>
+                                                {users.find(u => u.id === v.userId)?.name ?? `User ${v.userId}`} voted <span class="font-bold">{v.value}</span>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
+
                 </div>
-                {/if}
-                <button 
-                    onclick={() => getStoryId(story.id)}
-                    class="mt-3 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
-                    >
-                    Select
-                </button>
-                <button 
-                    onclick={() => exportToCSV(story)} 
-                    class="px-4 py-2 bg-white text-[rgb(51,51,51)] rounded hover:bg-[#348449] hover:text-white transform hover:-translate-y-0.5 transition duration-250 w-full mt-3 border border-black"
-                    >
-                        Export to CSV
-                </button>
-            </div>
             {/each}
         </div>
     </div>

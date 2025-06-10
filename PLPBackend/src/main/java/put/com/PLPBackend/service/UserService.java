@@ -29,6 +29,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+
     public ResponseEntity<User> getUserById(long id){
         Optional<User> user = userRepository.findById(id);
 		return user.map(ResponseEntity::ok)
@@ -69,6 +70,10 @@ public class UserService {
             .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
             .signWith(jwtSecret, SignatureAlgorithm.HS512)
             .compact();
+
+    public List<User> getUsersByRoom(String roomId) {
+        return userRepository.findByRoomId(roomId);
+
     }
 
     public List<User> getAllUsers() {

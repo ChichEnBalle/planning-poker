@@ -1,6 +1,10 @@
 package put.com.PLPBackend.controller;
 
+
 import java.util.Map;
+import java.util.List;
+import java.util.Optional;
+
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -13,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import put.com.PLPBackend.service.UserService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 
 import lombok.RequiredArgsConstructor;
 import put.com.PLPBackend.model.User;
@@ -23,9 +30,22 @@ import put.com.PLPBackend.service.UserService;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
-	
+
+	private final UserRepository userRepository;
 	private final UserService userService;
-	
+	private final SimpMessagingTemplate messagingTemplate;
+
+	public UserController(UserRepository userRepository, UserService userService, SimpMessagingTemplate messagingTemplate) {
+		this.userRepository = userRepository;
+		this.userService = userService;
+		this.messagingTemplate = messagingTemplate;
+	}
+
+	private void broadcastUsers(String roomId) {
+		List<User> users = userService.getUsersByRoom(roomId);
+		messagingTemplate.convertAndSend("/topic/users/" + roomId, users);
+	}
+
 	@GetMapping("/{id:[0-9]+}")
 	public ResponseEntity<User> getUserById(@PathVariable Long id) {
 		return this.userService.getUserById(id);
@@ -62,9 +82,20 @@ public class UserController {
         }
     }
 
+	@GetMapping("/room/{roomId}")
+    public List<User> getUsersByRoom(@PathVariable String roomId) {
+        return userService.getUsersByRoom(roomId);
+    }
+
 	@DeleteMapping()
-	public ResponseEntity<?> deleteUser(@RequestParam Long userId) {
-		return this.userService.deleteUser(userId);
+	public ResponseEntity<?> deleteUser(@RequestParam Long userId, @RequestParam String roomId) {
+		if (userRepository.existsById(userId)) {
+			userRepository.deleteById(userId);
+			broadcastUsers(roomId);
+			return ResponseEntity.ok().build();
+		} else {
+			return ResponseEntity.notFound().build();
+		}
 	}
 }
 

@@ -3,9 +3,10 @@ import { Client } from '@stomp/stompjs';
 // @ts-ignore
 let client = null;
 // @ts-ignore
-let voteCallback = null; // Fonction de callback pour l'écoute des messages
-
-let userStoriesCallback = null; // Fonction de callback pour l'écoute des messages
+let voteCallback = null; 
+let showVotesCallback = null;
+let userStoriesCallback = null; 
+let usersCallback = null;
 
 export const connectWebSocket = (username, room) => {
     client = new Client({
@@ -33,6 +34,23 @@ export const connectWebSocket = (username, room) => {
 
                 if (userStoriesCallback) {
                     userStoriesCallback(data);
+                }
+            });
+
+            client.subscribe(`/topic/showVotes/${room}`, (message) => {
+                const data = JSON.parse(message.body);
+                console.log('Received showVotes message:', data);
+                if (showVotesCallback) {
+                    showVotesCallback(data);
+                }
+            });
+
+            
+            client.subscribe(`/topic/users/${room}`, (message) => {
+                const users = JSON.parse(message.body);
+                console.log('Received users message:', users);
+                if (usersCallback) {
+                    usersCallback(users);
                 }
             });
         },
@@ -89,8 +107,18 @@ export const addUser = (user, room) => {
             body: JSON.stringify({
                 id: user.id,
                 name: user.name,
-                
+                roomId: room,
             }),
+        });
+    }
+};
+
+export const showVotesWS = (room, showVotes,userId) => {
+    console.log('showVotesWS called with:', room, showVotes, userId);
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.showVotes/${room}`,
+            body: JSON.stringify({ room, showVotes, userId }),
         });
     }
 };
@@ -107,6 +135,17 @@ export const listenForVotes = (callback) => {
 export const listenForUserStories = (callback) => {
     console.log('Setting up message callback for user stories');
     userStoriesCallback = callback;
+};
+
+// @ts-ignore
+export const listenForShowVotes = (callback) => {
+    console.log('Setting up showVotes callback');
+    showVotesCallback = callback;
+};
+
+export const listenForUsers = (callback) => {
+    console.log('Setting up users callback');
+    usersCallback = callback;
 };
 
 export const addUserStory = (userStory, room) => {
@@ -126,6 +165,8 @@ export const addUserStory = (userStory, room) => {
     }
 };
 
+
+
 export const deleteUserStory = (story, room) => {
     // @ts-ignore
     if (client && client.connected) {
@@ -142,6 +183,51 @@ export const deleteUserStory = (story, room) => {
     }
 };
 
+export function sendEndVoting(room, storyId, votes) {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/endVoting/${room}`,
+            body: JSON.stringify({
+                type: "endVoting",
+                storyId,
+                votes: votes.map(v => ({ userId: v.userId, value: v.value }))
+            })
+        });
+    } else {
+        console.error("WebSocket client not connected");
+    }
+}
+
+export function listenForEndVoting(room, callback) {
+    client.subscribe(`/topic/endVoting/${room}`, message => {
+        const data = JSON.parse(message.body);
+        if (data.type === "endVoting") {
+            callback(data);
+        }
+    });
+}
+
+
+export const updateUserStory = (userStory, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.updateUserStory/${room}`,
+            body: JSON.stringify(userStory),
+        });
+    }
+};
+
+export const addTaskToUserStoryWS = (userStoryId, task, room) => {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/play.addTaskToUserStory/${room}`,
+            body: JSON.stringify({
+                userStoryId,
+                task
+            }),
+        });
+    }
+};
 
 
 
