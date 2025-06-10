@@ -1,20 +1,21 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-
+	  import { goto } from '$app/navigation';
     import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForUsers, sendEndVoting, listenForEndVoting , listenForShowVotes, showVotesWS} from '$lib/websocketVote.js';
 
     import Login from "../../components/Login.svelte"
     import UserStories from "../../components/UserStories.svelte"
     import Card from '../../components/Card.svelte';
-	import Participants from '../../components/Participants.svelte';
+	  import Participants from '../../components/Participants.svelte';
+
 
 
 
     let username = '';
     let room = '';
-    let user: { id: number; name: string } | null = null;
+    let user: { id: number; username: string } | null = null;
     let userId: number | null = null;
-    let users: { id: number; name: string }[] = [];
+    let users: { id: number; username: string }[] = [];
     let storyId = -1; // ID de la story fixe
     let votes: { userId: number; storyId: number; value: string }[] = [];
     let hasJoined = false;
@@ -37,18 +38,41 @@
 
 
     onMount(async () => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            user = JSON.parse(storedUser);
-            username = user.name;
-            userId = user.id;
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) {
+            goto('/connection');
+        }
+        else {
+            try {
+                // Récupérer les informations de l'utilisateur à partir du token
+                const res = await fetch('http://localhost:8080/api/users/current', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${storedToken}`
+                    }
+                });
+
+                if (res.ok) {
+                    user = await res.json();
+                    username = user.username;
+                    userId = user.id;
+
+                    localStorage.setItem('user', JSON.stringify(user));
+                } else {
+                    const error = await res.json();
+                    console.error("Failed to fetch user info from token :", error.message);
+                    goto('/connection');
+                }
+            } catch (err) {
+                console.error("Error fetching user info:", err);
+                goto('/connection');
+            }
         }
 
+        // WARNING -- Can cause problems
         const storedUsername = localStorage.getItem('username');
-        const storedRoom = localStorage.getItem('room');
-        if (storedUsername && storedRoom) {
-            username = storedUsername;
-            room = storedRoom;
+        if (storedUsername ) {
+            username = storedUsername;;
             hasJoined = true;
             connectWebSocket(username, room);
 
@@ -127,8 +151,6 @@
     }
 
 
-
-
     const handleSendVote = () => {
         if (!selectedCard) {
 			warningMessage = "Please select a card before submitting your vote.";
@@ -137,12 +159,10 @@
 		}
 
 		if (hasVoted) {
-			warningMessage = "Vous avez déjà voté.";
+			warningMessage = "You already voted.";
 			setTimeout(() => (warningMessage = null), 3000);
 			return;
 		}
-
-
         if (userId === null) {
             warningMessage = "Erreur : utilisateur non identifié.";
             return;
@@ -173,11 +193,8 @@
             return true;
         }
 
-        return false;
-    }
 
-    async function handleJoinRoom (cUsername: string, cRoom: string){
-        username = cUsername;
+    async function handleJoinRoom (cRoom: string){
         room = cRoom;
         if (username.trim() && room.trim()) {
             console.log(username, room);
@@ -189,17 +206,12 @@
                     body: JSON.stringify({ name: room, adminId: userId })
                 });
                 hasJoined = true;
-               
-                
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
-
-
                 const resUsr = await fetch(`http://localhost:8080/api/users/room/${room}`);
                 if (resUsr.ok) {
                     users = await resUsr.json();
                 }
-
                 const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
                 
                 if (res.ok) {
@@ -207,7 +219,6 @@
                     adminId = roomData.adminId;
                     
                     console.log("Room found:", room + " with adminId: " + adminId);
-
                 }
                 
             }
@@ -215,12 +226,11 @@
                 alert("Username is already taken.");
             }
         } else {
-            alert("Username and room must be filled!");
+            alert("Room name must be filled!");
         }
     };
 
-
-    async function logout() {
+    function logout() {
         if (userId !== null) {
             votes.forEach(vote => {
                 if (vote.userId === userId) {
@@ -230,33 +240,28 @@
 
             localStorage.removeItem('user');
             localStorage.removeItem('username');
+            localStorage.removeItem('token');
             localStorage.removeItem('room');
 
-            await fetch(`http://localhost:8080/api/users?userId=${userId}&roomId=${room}`, {
-                method: 'DELETE'
-            });
+            goto('/connection');
         }
-		localStorage.removeItem('user');
-		user = null;
-		userId = null;
-		hasVoted = false;
-		selectedCard = null;
-		votes = [];
-        username = '';
-        room = '';
-        hasJoined = false;
-        showVotes = false;
-	}
+
+        user = null;
+        userId = null;
+        hasVoted = false;
+        selectedCard = null;
+        votes = [];
+            username = '';
+            room = '';
+            hasJoined = false;
+            showVotes = false;
+      }
 
     function endVoting() {
         sendEndVoting(room, storyId, votes.filter(v => v.storyId === storyId));
     }
-    
-    
-	
 
-	let hasVoted = false;
-
+	  let hasVoted = false;
     let warningMessage: string | null = null;
 	
 
@@ -281,16 +286,35 @@
 </script>
 
 
-<div class=" mx-auto p-4 bg-white shadow-lg rounded-lg">
+<div class="min-w-lg mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-4xl font-semibold mb-4 text-center">Planning Poker</h2>
-    {#if !username || !room || !hasJoined}
-        <Login {handleJoinRoom}></Login>
+    {#if !hasJoined}
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl !ml-0">Welcome, {username}</h2>
+        <button 
+            on:click={logout}
+            class="bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+            >
+            Logout
+        </button>
+    </div>
+        <div>
+            <h3 class="text-xl mb-4">Join a Room</h3>
+            <input type="text" bind:value={room} placeholder="Room Name" class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm" />
+            <button 
+                on:click={() => handleJoinRoom(room)} 
+                class="w-full mt-15 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+            >
+                Join Room
+            </button>
+        </div>
+
     {:else}
-        <div class="flex justify-between">
-            <h2 class="text-2xl">Welcome, {username}</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl !ml-[28px]">Welcome to room {room}, {username}</h2>
             <button 
                 on:click={logout}
-                class="mt-4 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+                class="mr-[28px] bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
                 >
                 Logout
             </button>
@@ -342,7 +366,7 @@
                                     {#each votes.filter(v => v.storyId === storyId) as vote}
                                         <li>
                                             {#if users.find(u => u.id === vote.userId)}
-                                                {users.find(u => u.id === vote.userId).name}
+                                                {users.find(u => u.id === vote.userId).username}
                                             {:else}
                                                 User {vote.userId}
                                             {/if}
@@ -399,10 +423,7 @@
                                 End Voting & Show History
                             </button>
                         {/if}
-                    {/if}
-                        
-                
-                    
+                    {/if}        
                 {/if}
             </div>
         {/if}

@@ -4,54 +4,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
 public class User {
     @Id @GeneratedValue
     private long id;
-    private String name;
+    private String username;
+    private String password;
     private int selectedCard;
     private boolean hasVoted;
-    private String roomId;
 
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getSelectedCard() {
-        return selectedCard;
-    }
-
-    public boolean isHasVoted() {
-        return hasVoted;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setSelectedCard(int selectedCard) {
-        this.selectedCard = selectedCard;
-    }
-
-    public void setHasVoted(boolean hasVoted) {
-        this.hasVoted = hasVoted;
-    }
 }

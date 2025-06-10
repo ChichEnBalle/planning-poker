@@ -26,8 +26,8 @@ public class RoomService {
     // Ajouter un utilisateur à la room
     public Room addUserToRoom(String roomName, User user) {
         Room room = getOrCreateRoom(roomName);  // Obtenir ou créer la room
-        String username = user.getName();
-        user.setName(username);
+        String username = user.getUsername();
+        user.setUsername(username);
         room.getUsers().add(user);  // Ajouter l'utilisateur à la room
         roomRepository.save(room);  // Sauvegarder la room mise à jour
         return room;
