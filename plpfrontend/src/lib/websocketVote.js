@@ -111,12 +111,13 @@ export const sendUnvote = (userId, storyId, room) => {
 // @ts-ignore
 export const addUser = (user, room) => {
     // @ts-ignore
+    console.log('Adding user:', user, 'to room:', room);
     if (client && client.connected) {
         client.publish({
             destination: `/app/play.addUser/${room}`,
             body: JSON.stringify({
                 id: user.id,
-                name: user.name,
+                username: user.name,
                 roomId: room,
             }),
         });

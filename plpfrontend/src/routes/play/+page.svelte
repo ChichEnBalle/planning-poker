@@ -89,11 +89,13 @@
             if (res.ok) {
                 users = await res.json();
             }
-            listenForUsers( (newUsers) => {
-                users = newUsers;
-            });
             
         }
+        listenForUsers((newUsers) => {
+                users = [...newUsers]; 
+                console.log("Updated users:", users);
+        });
+            
         
 
        
@@ -199,11 +201,13 @@
             console.log(username, room);
             
             connectWebSocket(username, room);
+            
             await fetch('http://localhost:8080/api/rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: room, adminId: userId })
             });
+            addUser({ id: userId, name:username}, room);
             hasJoined = true;
             localStorage.setItem('username', username);
             localStorage.setItem('room', room);

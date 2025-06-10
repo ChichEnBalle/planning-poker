@@ -1,6 +1,7 @@
 package put.com.PLPBackend.controller;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import put.com.PLPBackend.model.Room;
 import put.com.PLPBackend.dto.ShowVotesMessage;
 import put.com.PLPBackend.dto.VoteRequest;
 import put.com.PLPBackend.service.RoomService;
+import put.com.PLPBackend.service.UserService;
 import put.com.PLPBackend.service.VoteService;
 
 @Controller
@@ -28,12 +31,21 @@ public class VoteController {
     @Autowired
     private RoomService roomService;
     private VoteService voteService;
+    private final UserService userService;
     private final UserRepository userRepository ;
+    private final SimpMessagingTemplate messagingTemplate;
 
-	public VoteController(RoomService roomService, UserRepository userRepository, VoteService voteService) {
+	public VoteController(RoomService roomService, UserRepository userRepository, VoteService voteService, UserService userService, SimpMessagingTemplate messagingTemplate) {
         this.roomService = roomService;
+        this.userService = userService;
 		this.userRepository = userRepository;
         this.voteService = voteService;
+        this.messagingTemplate = messagingTemplate;
+	}
+
+    private void broadcastUsers(String roomName) {
+		List<User> users = userService.getUsersByRoom(roomName);
+		messagingTemplate.convertAndSend("/topic/users/" + roomName, users);
 	}
 
     // Gérer l'envoi de messages dans une room spécifique
@@ -58,8 +70,8 @@ public class VoteController {
 
     @Transactional
     @MessageMapping("/play.addUser/{room}")
-    @SendTo("/topic/{room}")
-    public User addUser(User u, @DestinationVariable String room, SimpMessageHeaderAccessor headerAccessor) {
+    
+    public void addUser(User u, @DestinationVariable String room, SimpMessageHeaderAccessor headerAccessor) {
         System.out.println("User " + u.getUsername() + " joined the room " + room);
         
 
@@ -69,8 +81,10 @@ public class VoteController {
         // Ajouter l'utilisateur à la room
         currentRoom.getUsers().add(u);
         roomService.saveRoom(currentRoom); // Sauvegarder la room
-
-        return userRepository.save(u);
+        broadcastUsers(room);
+        System.out.println("Users in room " + room + ": " + currentRoom.getUsers());
+        
+        
     }
 
     @MessageMapping("/play.unvote/{room}")
