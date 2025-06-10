@@ -313,7 +313,7 @@
                                     deleteUS(story);
                                 }
                             }} 
-                            class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
+                            class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250">
                             Delete
                         </button>
                     </div>

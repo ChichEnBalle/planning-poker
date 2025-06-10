@@ -2,6 +2,7 @@ package put.com.PLPBackend.service;
 
 import java.util.List;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 
@@ -14,18 +15,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import put.com.PLPBackend.model.Room;
 import put.com.PLPBackend.model.User;
+import put.com.PLPBackend.repository.RoomRepository;
 import put.com.PLPBackend.repository.UserRepository;
 
 @Service
 public class UserService {
 
+    private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecretKey jwtSecret = Keys.hmacShaKeyFor("la_sécurité_est_primordiale_avant_tout_donc_il_faut_que_elle_ait_une_sacrée_taille".getBytes(StandardCharsets.UTF_8));
     private final long jwtExpirationMs = 86400000; // 24h
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
         this.userRepository = userRepository;
     }
 
@@ -64,16 +70,21 @@ public class UserService {
     }
     
     private String generateJwtToken(User user) {
-    return Jwts.builder()
-            .setSubject(user.getUsername())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-            .signWith(jwtSecret, SignatureAlgorithm.HS512)
-            .compact();
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(jwtSecret, SignatureAlgorithm.HS512)
+                .compact();
+    }
 
-    public List<User> getUsersByRoom(String roomId) {
-        return userRepository.findByRoomId(roomId);
-
+    public List<User> getUsersByRoom(String roomName) {
+        Room room = roomRepository.findByName(roomName);
+        if (room != null) {
+            return new ArrayList<>(room.getUsers());
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     public List<User> getAllUsers() {

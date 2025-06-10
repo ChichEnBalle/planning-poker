@@ -23,6 +23,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import lombok.RequiredArgsConstructor;
 import put.com.PLPBackend.model.User;
+
 import put.com.PLPBackend.service.UserService;
 
 @RestController
@@ -31,19 +32,15 @@ import put.com.PLPBackend.service.UserService;
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
-	private final UserRepository userRepository;
+	
 	private final UserService userService;
 	private final SimpMessagingTemplate messagingTemplate;
 
-	public UserController(UserRepository userRepository, UserService userService, SimpMessagingTemplate messagingTemplate) {
-		this.userRepository = userRepository;
-		this.userService = userService;
-		this.messagingTemplate = messagingTemplate;
-	}
+	
 
-	private void broadcastUsers(String roomId) {
-		List<User> users = userService.getUsersByRoom(roomId);
-		messagingTemplate.convertAndSend("/topic/users/" + roomId, users);
+	private void broadcastUsers(String roomName) {
+		List<User> users = userService.getUsersByRoom(roomName);
+		messagingTemplate.convertAndSend("/topic/users/" + roomName, users);
 	}
 
 	@GetMapping("/{id:[0-9]+}")
@@ -82,12 +79,12 @@ public class UserController {
         }
     }
 
-	@GetMapping("/room/{roomId}")
-    public List<User> getUsersByRoom(@PathVariable String roomId) {
-        return userService.getUsersByRoom(roomId);
-    }
+	@GetMapping("/room/{roomName}")
+	public List<User> getUsersByRoom(@PathVariable String roomName) {
+		return userService.getUsersByRoom(roomName);
+	}
 
-	@DeleteMapping()
+	/* @DeleteMapping() PENSEZ QUITTER ROOM------------------------------------------------------------!!!!!!
 	public ResponseEntity<?> deleteUser(@RequestParam Long userId, @RequestParam String roomId) {
 		if (userRepository.existsById(userId)) {
 			userRepository.deleteById(userId);
@@ -96,6 +93,6 @@ public class UserController {
 		} else {
 			return ResponseEntity.notFound().build();
 		}
-	}
+	} */
 }
 

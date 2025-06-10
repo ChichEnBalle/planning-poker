@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-	  import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
     import { connectWebSocket, sendVote, addUser, sendUnvote, listenForVotes, listenForUsers, sendEndVoting, listenForEndVoting , listenForShowVotes, showVotesWS} from '$lib/websocketVote.js';
 
-    import Login from "../../components/Login.svelte"
+    
     import UserStories from "../../components/UserStories.svelte"
     import Card from '../../components/Card.svelte';
-	  import Participants from '../../components/Participants.svelte';
+	import Participants from '../../components/Participants.svelte';
 
 
 
@@ -89,16 +89,14 @@
             if (res.ok) {
                 users = await res.json();
             }
-
             listenForUsers( (newUsers) => {
                 users = newUsers;
             });
+            
         }
+        
 
-        const res = await fetch(`http://localhost:8080/api/users/room/${room}`);
-        if (res.ok) {
-            users = await res.json();
-        }
+       
 
         listenForVotes(async (newVote) => {
             if (!users.find(u => u.id === newVote.userId)) {
@@ -128,7 +126,7 @@
             showVotes = msg.showVotes;
         });
 
-        listenForEndVoting(room, (data) => {
+        listenForEndVoting((data) => {
             voteHistory = [
                 ...voteHistory,
                 {
@@ -179,7 +177,7 @@
         hasVoted = true; // Marquer l'utilisateur comme ayant voté
     };
 
-    async function register(): Promise<boolean> {
+    /* async function register(): Promise<boolean> {
         const res = await fetch('http://localhost:8080/api/users/register?roomId=' + room, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -192,39 +190,37 @@
             localStorage.setItem('user', JSON.stringify(user));
             return true;
         }
+    }; */
 
 
     async function handleJoinRoom (cRoom: string){
         room = cRoom;
-        if (username.trim() && room.trim()) {
+        if (room.trim()) {
             console.log(username, room);
-            if(await register()){
-                connectWebSocket(username, room);
-                await fetch('http://localhost:8080/api/rooms', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: room, adminId: userId })
-                });
-                hasJoined = true;
-                localStorage.setItem('username', username);
-                localStorage.setItem('room', room);
-                const resUsr = await fetch(`http://localhost:8080/api/users/room/${room}`);
-                if (resUsr.ok) {
-                    users = await resUsr.json();
-                }
-                const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
-                
-                if (res.ok) {
-                    const roomData = await res.json();
-                    adminId = roomData.adminId;
-                    
-                    console.log("Room found:", room + " with adminId: " + adminId);
-                }
-                
+            
+            connectWebSocket(username, room);
+            await fetch('http://localhost:8080/api/rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: room, adminId: userId })
+            });
+            hasJoined = true;
+            localStorage.setItem('username', username);
+            localStorage.setItem('room', room);
+            console.log("User joined room:", room);
+            const resUsr = await fetch(`http://localhost:8080/api/users/room/${room}`);
+            if (resUsr.ok) {
+                users = await resUsr.json();
             }
-            else {
-                alert("Username is already taken.");
+            const res = await fetch(`http://localhost:8080/api/rooms/${room}`);
+            
+            if (res.ok) {
+                const roomData = await res.json();
+                adminId = roomData.adminId;
+                
+                console.log("Room found:", room + " with adminId: " + adminId);
             }
+            
         } else {
             alert("Room name must be filled!");
         }
@@ -251,17 +247,17 @@
         hasVoted = false;
         selectedCard = null;
         votes = [];
-            username = '';
-            room = '';
-            hasJoined = false;
-            showVotes = false;
-      }
+         username = '';
+         room = '';
+         hasJoined = false;
+         showVotes = false;
+    }
 
     function endVoting() {
         sendEndVoting(room, storyId, votes.filter(v => v.storyId === storyId));
     }
 
-	  let hasVoted = false;
+    let hasVoted = false;
     let warningMessage: string | null = null;
 	
 
@@ -458,15 +454,4 @@
 	button:hover {
 		background-color: #a60000;
 	} */
-	.warning {
-		color: #d9534f;
-		font-weight: bold;
-		margin-bottom: 1rem;
-	}
-
-	.error {
-		color: #ff0000;
-		font-weight: bold;
-		margin-bottom: 1rem;
-	}
 </style>
