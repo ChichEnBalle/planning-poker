@@ -71,8 +71,10 @@
 
         // WARNING -- Can cause problems
         const storedUsername = localStorage.getItem('username');
-        if (storedUsername ) {
-            username = storedUsername;;
+        const storedRoom = localStorage.getItem('room');
+        if (storedUsername && storedRoom) {
+            room = storedRoom;
+            username = storedUsername;
             hasJoined = true;
             connectWebSocket(username, room);
 
@@ -82,6 +84,7 @@
                 adminId = roomData.adminId;
                 console.log("Room found:", room + " with adminId: " + adminId);
             }
+            addUser({ id: userId, name: username }, room);
         }
 
         if (room) {
