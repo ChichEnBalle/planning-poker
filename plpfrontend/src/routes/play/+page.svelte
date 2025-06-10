@@ -337,7 +337,7 @@
                         <!-- Display the selected card and the votes of all users -->
                         <h2>Votes</h2>
                         {#if votes.filter(v => v.storyId === storyId).length > 0}
-                            {#if allVoted }
+                            {#if allVoted || showVotes}
                                 <ul>
                                     {#each votes.filter(v => v.storyId === storyId) as vote}
                                         <li>
@@ -351,7 +351,7 @@
                                         </li>
                                     {/each}
                                 </ul>
-                                {#if userId === adminId}
+                                {#if userId === adminId && !allVoted}
                                     <button 
                                         on:click={() => showVotesWS(room, false, userId)}
                                         class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">
