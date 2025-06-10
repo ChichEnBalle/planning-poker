@@ -60,7 +60,7 @@
     }
 </script>
 
-<div class="min-w-lg mx-auto p-4 bg-white shadow-lg rounded-lg">
+<div class="mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-2xl mb-4 text-center">
         {isRegistering ? 'Create an Account' : 'Login'}
     </h2>
@@ -83,7 +83,7 @@
         <div class="mb-4 flex items-start">
             <input type="checkbox" id="accept-policy" bind:checked={hasAcceptedPolicy} class="mt-1 mr-2" />
             <label for="accept-policy" class="text-sm text-gray-700">
-                I accept the <a href="/privacy-policy" class="text-blue-500 hover:underline">privacy policy</a>.
+                I accept the <a href="/privacy-policy" class="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">privacy policy</a>.
             </label>
         </div>
     {/if}

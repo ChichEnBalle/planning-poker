@@ -305,7 +305,7 @@
 </script>
 
 
-<div class="min-w-lg mx-auto p-4 bg-white shadow-lg rounded-lg">
+<div class="mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-4xl font-semibold mb-4 text-center">Planning Poker</h2>
     {#if !hasJoined}
     <div class="flex justify-between items-center">
