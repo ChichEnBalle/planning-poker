@@ -331,18 +331,20 @@
     {:else}
         <div class="flex justify-between items-center">
             <h2 class="text-2xl !ml-[28px]">Welcome to room {room}, {username}</h2>
-            <button 
-                on:click={logout}
-                class="mr-[28px] bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
-                >
-                Logout
-            </button>
-            <button 
+            <div>
+                <button
+                    on:click={logout}
+                    class="mr-2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+                    >
+                    Logout
+                </button>
+                <button 
                 on:click={quitRoom}
                 class="mr-2 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer h-10"
-            >
+                >
                 Quit
             </button>
+        </div>
         </div>
         <Participants {users} />
 
