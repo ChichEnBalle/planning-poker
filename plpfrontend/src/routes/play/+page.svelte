@@ -66,7 +66,7 @@
                 users = await res.json();
             }
 
-            listenForUsers(room, (newUsers) => {
+            listenForUsers( (newUsers) => {
                 users = newUsers;
             });
         }
@@ -98,15 +98,7 @@
                 ];
             }
             
-            /* if (
-                votesForCurrentStory.length === activeUsers.length &&
-                activeUsers.length > 0 &&
-                !showVotes // évite de renvoyer plusieurs fois
-            ) {
-                
-                showVotesWS(room, true, userId);
-                
-            } */
+            
         });
         listenForShowVotes((msg) => {
             showVotes = msg.showVotes;
@@ -131,6 +123,7 @@
         showHistory = false;
         hasVoted = false;
         selectedCard = null;
+        showVotes = false;
     }
 
 
@@ -344,7 +337,7 @@
                         <!-- Display the selected card and the votes of all users -->
                         <h2>Votes</h2>
                         {#if votes.filter(v => v.storyId === storyId).length > 0}
-                            {#if allVoted && showVotes}
+                            {#if allVoted }
                                 <ul>
                                     {#each votes.filter(v => v.storyId === storyId) as vote}
                                         <li>
@@ -388,6 +381,11 @@
                         >
                             Return to selection
                         </button>
+                        {#if !allVoted && storyId !== -1}
+                            <div class="text-center text-blue-700 font-semibold my-2">
+                                {usersLeftToVote} participant(s) still need to vote.
+                            </div>
+                        {/if}
                         {#if allVoted && storyId !== -1}
                             <div class="text-center text-green-700 font-bold my-4">
                                 All participants have voted! Voting is over.
