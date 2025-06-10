@@ -207,13 +207,13 @@
                 type="text" bind:value={newTitle} 
                 placeholder="Title" 
                 required 
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm"
             />
             <textarea 
                 bind:value={newDescription}
                 placeholder="Description"
                 required
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm"
             >
             </textarea>
             <button 
@@ -291,7 +291,7 @@
                         type="text" 
                         bind:value={story.newTask} 
                         placeholder="New Task" 
-                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3"
+                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 sm:text-sm"
                     />
                     <button 
                         onclick={() => addTaskToUserStory(story.id)} 
@@ -328,12 +328,12 @@
                         type="text" 
                         bind:value={story.tempTitle} 
                         placeholder="New Title" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
                     />
                     <textarea 
                         bind:value={story.tempDescription} 
                         placeholder="New Description" 
-                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
+                        class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
                     ></textarea>
                     <button 
                         onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 

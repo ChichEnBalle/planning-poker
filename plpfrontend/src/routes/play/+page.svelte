@@ -18,7 +18,6 @@
 
     onMount(async () => {
         const storedToken = localStorage.getItem('token');
-        console.log("Token envoyé :", storedToken);
         if (!storedToken) {
             goto('/connection');
         }
@@ -49,6 +48,7 @@
             }
         }
 
+        // WARNING -- Can cause problems
         const storedUsername = localStorage.getItem('username');
         if (storedUsername ) {
             username = storedUsername;;
@@ -123,6 +123,7 @@
             });
 
             localStorage.removeItem('user');
+            localStorage.removeItem('username');
             localStorage.removeItem('token');
             localStorage.removeItem('room');
 
@@ -171,26 +172,34 @@
 </script>
 
 
-<div class=" mx-auto p-4 bg-white shadow-lg rounded-lg">
+<div class="min-w-lg mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-4xl font-semibold mb-4 text-center">Planning Poker</h2>
     {#if !hasJoined}
-        <h2 class="text-2xl">Welcome, {username}</h2>
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl !ml-0">Welcome, {username}</h2>
+        <button 
+            on:click={logout}
+            class="bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+            >
+            Logout
+        </button>
+    </div>
         <div>
             <h3 class="text-xl mb-4">Join a Room</h3>
-            <input type="text" bind:value={room} placeholder="Room Name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+            <input type="text" bind:value={room} placeholder="Room Name" class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm" />
             <button 
                 on:click={() => handleJoinRoom(room)} 
-                class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
+                class="w-full mt-15 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer"
             >
                 Join Room
             </button>
         </div>
     {:else}
         <div class="flex justify-between items-center">
-            <h2 class="text-2xl">Welcome to room {room}, {username}</h2>
+            <h2 class="text-2xl !ml-[28px]">Welcome to room {room}, {username}</h2>
             <button 
                 on:click={logout}
-                class="bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
+                class="mr-[28px] bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
                 >
                 Logout
             </button>

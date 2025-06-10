@@ -5,6 +5,7 @@
     let password: string = '';
     let isRegistering: boolean = true; 
     let errorMessage: string | null = null;
+    let hasAcceptedPolicy: boolean = false;
 
     async function register(username: string, password: string): Promise<boolean> {
         console.log("Données envoyées :", { username, password });
@@ -23,7 +24,6 @@
         } else {
             errorMessage = "Failed to create account. Please try again.";
             const error = await res.json();
-            console.error("Erreur lors de l'enregistrement :", error.message);
             return false;
         }
     }
@@ -49,6 +49,10 @@
 
     async function handleSubmit() {
         if (isRegistering) {
+            if (!hasAcceptedPolicy) {
+                errorMessage = "You must accept the privacy policy to proceed.";
+                return;
+            }
             await register(username, password);
         } else {
             await login(username, password);
@@ -56,7 +60,7 @@
     }
 </script>
 
-<div class="max-w-md mx-auto p-4 bg-white shadow-lg rounded-lg">
+<div class="min-w-lg mx-auto p-4 bg-white shadow-lg rounded-lg">
     <h2 class="text-2xl mb-4 text-center">
         {isRegistering ? 'Create an Account' : 'Login'}
     </h2>
@@ -67,13 +71,22 @@
 
     <div class="mb-4">
         <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-        <input type="text" id="username" bind:value={username} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        <input type="text" id="username" bind:value={username} class="w-full bg-white rounded-md border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mt-1 shadow-sm sm:text-sm" />
     </div>
 
     <div class="mb-4">
         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-        <input type="password" id="password" bind:value={password} class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+        <input type="password" id="password" bind:value={password} class="w-full bg-white rounded-md border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mt-1 mb-4 shadow-sm sm:text-sm" />
     </div>
+
+    {#if isRegistering}
+        <div class="mb-4 flex items-start">
+            <input type="checkbox" id="accept-policy" bind:checked={hasAcceptedPolicy} class="mt-1 mr-2" />
+            <label for="accept-policy" class="text-sm text-gray-700">
+                I accept the <a href="/privacy-policy" class="text-blue-500 hover:underline">privacy policy</a>.
+            </label>
+        </div>
+    {/if}
 
     <button 
         onclick={async () => {

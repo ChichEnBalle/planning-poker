@@ -26,17 +26,15 @@ public class UserController {
 	
 	private final UserService userService;
 	
-	// @GetMapping("{id}")
-	// public ResponseEntity<User> getUserById(@PathVariable Long id) {
-	// 	return this.userService.getUserById(id);
-	// }
+	@GetMapping("/{id:[0-9]+}")
+	public ResponseEntity<User> getUserById(@PathVariable Long id) {
+		return this.userService.getUserById(id);
+	}
 	
 	@GetMapping("/current")
 	public User getCurrentUser(@RequestHeader("Authorization") String authHeader) {
 		// Delete "Bearer " prefixe of the token
-		System.out.println("Authorization Header : " + authHeader);
 		String token = authHeader.replace("Bearer ", "");
-		System.out.println("Token reçu : " + token);
 		return userService.getUserFromToken(token);
 	}
 

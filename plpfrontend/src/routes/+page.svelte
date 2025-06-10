@@ -1,10 +1,20 @@
 <script lang="ts">
 	let message = "Let's play Planning Poker !";
+
+    //to go on /play if connected, /connection if not
+    function handleButtonClick() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            window.location.href = '/play';
+        } else {
+            window.location.href = '/connection';
+        }
+    }
 </script>
 
 <h1>{message}</h1>
 
-<button class="button-play" onclick={() => window.location.href = '/connection'}>Play</button>
+<button class="button-play" onclick={handleButtonClick}>Play</button>
 
 
 <style>

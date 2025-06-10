@@ -92,11 +92,10 @@ public class UserService {
     public User getUserFromToken(String token) {
         try {
             String username = getUsernameFromToken(token);
-            System.out.println("Username extrait du token : " + username);
             return userRepository.findByUsername(username)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
         } catch (Exception e) {
-            System.err.println("Erreur lors de la récupération de l'utilisateur à partir du token : " + e.getMessage());
+            System.err.println("Error when getting username from repository : " + e.getMessage());
             throw e;
         }
     }
