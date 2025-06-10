@@ -32,7 +32,7 @@
 
     let showVotes = false;
     let adminId: number | null = null; 
-    let activeUsers: { name: string }[] = [];
+    
 
 
 
@@ -56,10 +56,6 @@
             if (res.ok) {
                 const roomData = await res.json();
                 adminId = roomData.adminId;
-                if (roomData.users) {
-                    users = roomData.users;
-                    console.log("il y a ça au on mount", users);
-                }
                 console.log("Room found:", room + " with adminId: " + adminId);
             }
         }
@@ -101,11 +97,8 @@
                     newVote
                 ];
             }
-            const votesForCurrentStory = votes.filter(v => v.storyId === storyId);
-            console.log("Votes for current story:", votesForCurrentStory);
-            console.log("Users in room:", users);
-            console.log("Active users:", activeUsers);
-            if (
+            
+            /* if (
                 votesForCurrentStory.length === activeUsers.length &&
                 activeUsers.length > 0 &&
                 !showVotes // évite de renvoyer plusieurs fois
@@ -113,7 +106,10 @@
                 
                 showVotesWS(room, true, userId);
                 
-            }
+            } */
+        });
+        listenForShowVotes((msg) => {
+            showVotes = msg.showVotes;
         });
 
         listenForEndVoting(room, (data) => {
@@ -127,9 +123,7 @@
             showHistory = true;
         });
 
-        listenForShowVotes((msg) => {
-            showVotes = msg.showVotes;
-        });
+        
     });
 
     function getStoryId(cStoryId: number) {
@@ -202,8 +196,7 @@
                     body: JSON.stringify({ name: room, adminId: userId })
                 });
                 hasJoined = true;
-                activeUsers.push({ name: username });
-                console.log("Active Users in room:", users);
+               
                 
                 localStorage.setItem('username', username);
                 localStorage.setItem('room', room);
@@ -219,10 +212,7 @@
                 if (res.ok) {
                     const roomData = await res.json();
                     adminId = roomData.adminId;
-                    if (roomData.users) {
-                        users = roomData.users;
-                        console.log("Users in room:", users);
-                    }
+                    
                     console.log("Room found:", room + " with adminId: " + adminId);
 
                 }
@@ -299,7 +289,7 @@
 
 
 <div class=" mx-auto p-4 bg-white shadow-lg rounded-lg">
-    <h2 class="text-4xl font-semibold mb-4 text-center">Planning Pocker</h2>
+    <h2 class="text-4xl font-semibold mb-4 text-center">Planning Poker</h2>
     {#if !username || !room || !hasJoined}
         <Login {handleJoinRoom}></Login>
     {:else}
@@ -354,19 +344,34 @@
                         <!-- Display the selected card and the votes of all users -->
                         <h2>Votes</h2>
                         {#if votes.filter(v => v.storyId === storyId).length > 0}
-                            <ul>
-                                {#each votes.filter(v => v.storyId === storyId) as vote}
-                                    <li>
-                                        {#if users.find(u => u.id === vote.userId)}
-                                            {users.find(u => u.id === vote.userId).name}
-                                        {:else}
-                                            User {vote.userId}
-                                        {/if}
-                                        voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                        on {userStoriesRef?.getTitle(vote.storyId) ?? vote.storyId}
-                                    </li>
-                                {/each}
-                            </ul>
+                            {#if allVoted && showVotes}
+                                <ul>
+                                    {#each votes.filter(v => v.storyId === storyId) as vote}
+                                        <li>
+                                            {#if users.find(u => u.id === vote.userId)}
+                                                {users.find(u => u.id === vote.userId).name}
+                                            {:else}
+                                                User {vote.userId}
+                                            {/if}
+                                            voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
+                                            on {userStoriesRef?.getTitle(vote.storyId) ?? vote.storyId}
+                                        </li>
+                                    {/each}
+                                </ul>
+                                {#if userId === adminId}
+                                    <button 
+                                        on:click={() => showVotesWS(room, false, userId)}
+                                        class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">
+                                        Hide votes
+                                    </button>
+                                {/if}
+                            {:else}
+                                {#if userId === adminId}
+                                    <button 
+                                        on:click={() => showVotesWS(room, true, userId)}
+                                        class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer">Show votes</button>
+                                {/if}
+                            {/if}
                         {:else}
                             <p>No votes yet.</p>
                         {/if}
@@ -398,42 +403,8 @@
                         {/if}
                     {/if}
                         
-                {:else}
-                    <!-- Display the selected card and the votes of all users -->
-                    <h2>Votes</h2>
-                    {#if votes.length > 0}
-                        {#if showVotes}
-
-                            <ul>
-                                {#each votes as vote}
-                                    <li>
-                                        {#if users.find(u => u.id === vote.userId)}
-                                            {users.find(u => u.id === vote.userId).name}
-                                        {:else}
-                                            User {vote.userId}
-                                        {/if}
-                                        voted <div class="border rounded-lg m-[2px] p-[18px] text-center font-bold bg-white inline-block">{vote.value}</div>
-                                        on {vote.storyId}
-                                    </li>
-                                {/each}
-                            </ul>
-                            {#if userId === adminId}
-                                <button 
-                                    on:click={() => showVotesWS(room, false, userId)}
-                                    class="mt-4 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer">
-                                    Hide votes
-                                </button>
-                            {/if}
-                        {:else}
-                            {#if userId === adminId}
-                                <button 
-                                    on:click={() => showVotesWS(room, true, userId)}
-                                    class="mt-4 bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250 cursor-pointer">Show votes</button>
-                            {/if}
-                        {/if}
-                    {:else}
-                        <p>No votes yet.</p>
-                    {/if}
+                
+                    
                 {/if}
             </div>
         {/if}
