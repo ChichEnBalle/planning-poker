@@ -97,7 +97,7 @@ export const addUser = (user, room) => {
             body: JSON.stringify({
                 id: user.id,
                 name: user.name,
-                
+                roomId: room,
             }),
         });
     }
@@ -150,6 +150,14 @@ export const addUserStory = (userStory, room) => {
     }
 };
 
+export function listenForUsers(room, callback) {
+    if (!client) return;
+    client.subscribe(`/topic/users/${room}`, message => {
+        const users = JSON.parse(message.body);
+        callback(users);
+    });
+}
+
 export const deleteUserStory = (story, room) => {
     // @ts-ignore
     if (client && client.connected) {
@@ -165,6 +173,31 @@ export const deleteUserStory = (story, room) => {
         });
     }
 };
+
+export function sendEndVoting(room, storyId, votes) {
+    if (client && client.connected) {
+        client.publish({
+            destination: `/app/endVoting/${room}`,
+            body: JSON.stringify({
+                type: "endVoting",
+                storyId,
+                votes: votes.map(v => ({ userId: v.userId, value: v.value }))
+            })
+        });
+    } else {
+        console.error("WebSocket client not connected");
+    }
+}
+
+export function listenForEndVoting(room, callback) {
+    client.subscribe(`/topic/endVoting/${room}`, message => {
+        const data = JSON.parse(message.body);
+        if (data.type === "endVoting") {
+            callback(data);
+        }
+    });
+}
+
 
 export const updateUserStory = (userStory, room) => {
     if (client && client.connected) {
@@ -186,7 +219,6 @@ export const addTaskToUserStoryWS = (userStoryId, task, room) => {
         });
     }
 };
-
 
 
 
