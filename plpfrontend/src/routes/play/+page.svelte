@@ -254,14 +254,30 @@
         hasVoted = false;
         selectedCard = null;
         votes = [];
-         username = '';
-         room = '';
-         hasJoined = false;
-         showVotes = false;
+        username = '';
+        room = '';
+        hasJoined = false;
+        showVotes = false;
     }
 
     function endVoting() {
         sendEndVoting(room, storyId, votes.filter(v => v.storyId === storyId));
+    }
+
+    function quitRoom() {
+        // sendLeaveRoom(userId, room);
+
+        localStorage.removeItem('room');
+        hasJoined = false;
+        room = '';
+        users = [];
+        votes = [];
+        storyId = -1;
+        showHistory = false;
+        voteHistory = [];
+        // Optionnel : déconnecter le websocket si tu veux
+        // if (client && client.deactivate) client.deactivate();
+        
     }
 
     let hasVoted = false;
@@ -320,6 +336,12 @@
                 class="mr-[28px] bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250 cursor-pointer h-10"
                 >
                 Logout
+            </button>
+            <button 
+                on:click={quitRoom}
+                class="mr-2 bg-yellow-600 text-white py-2 px-4 rounded hover:bg-yellow-700 transition duration-250 cursor-pointer h-10"
+            >
+                Quit
             </button>
         </div>
         <Participants {users} />
