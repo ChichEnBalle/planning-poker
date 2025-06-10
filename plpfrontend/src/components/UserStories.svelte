@@ -159,7 +159,6 @@
         URL.revokeObjectURL(url);
     }
 
-
     onMount(() => {
         listenForUserStories( (newUserStory) => {
             console.log('New user story received:', newUserStory);  
@@ -202,13 +201,13 @@
                 type="text" bind:value={newTitle} 
                 placeholder="Title" 
                 required 
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm"
             />
             <textarea 
                 bind:value={newDescription}
                 placeholder="Description"
                 required
-                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-4"
+                class="w-full bg-white rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-4 shadow-sm sm:text-sm"
             >
             </textarea>
             <button 
@@ -270,32 +269,32 @@
         <h2 class="text-[rgb(51,51,51)] text-[25px]">Existing User Stories</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {#each userStories as story}
-                <div class="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">{story.title}</h3>
-                    <p class="text-gray-600 mb-4">{story.description}</p>
-                    {#if story.estimation!=0}
-                    <div class="text-gray-700 font-semibold">Points : {story.estimation}</div>
-                    {/if}
-                    <ul class="text-sm text-gray-500 mb-4">
-                        {#each story.tasks as task}
-                        <li class="list-disc list-inside">{task}</li>
-                        {/each}
-                    </ul>
-                    <div class="flex justify-around gap-2">
-                        <input 
-                            type="text" 
-                            bind:value={story.newTask} 
-                            placeholder="New Task" 
-                            class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3"
-                        />
-                        <button 
-                            onclick={() => addTaskToUserStory(story.id)} 
-                            class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
-                        >
-                            Add
-                        </button>
-                    </div>
-                    <div class="flex">
+            <div class="bg-white shadow-md rounded-lg p-4 border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">{story.title}</h3>
+                <p class="text-gray-600 mb-4">{story.description}</p>
+                {#if story.estimation!=0}
+                <div class="text-gray-700 font-semibold">Points : {story.estimation}</div>
+                {/if}
+                <ul class="text-sm text-gray-500 mb-4">
+                    {#each story.tasks as task}
+                    <li class="list-disc list-inside">{task}</li>
+                    {/each}
+                </ul>
+                <div class="flex justify-around gap-2">
+                    <input 
+                        type="text" 
+                        bind:value={story.newTask} 
+                        placeholder="New Task" 
+                        class="flex-1 bg-gray-50 w-1/4 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 sm:text-sm"
+                    />
+                    <button 
+                        onclick={() => addTaskToUserStory(story.id)} 
+                        class="bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                    >
+                        Add
+                    </button>
+                </div>
+                <div class="flex">
                         <button 
                         onclick={() => {
                             story.isEditing = !story.isEditing;
@@ -309,35 +308,39 @@
                             {story.isEditing ? 'Cancel' : 'Edit'}
                         </button>
                         <button 
-                            onclick={() => deleteUS(story)} 
-                            class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250"
-                            >
+                            onclick={() => {
+                                if (window.confirm('Are you sure you want to delete this user story?')) {
+                                    deleteUS(story);
+                                }
+                            }} 
+                            class="mt-4 ml-1 w-1/2 bg-red-800 text-white py-2 px-4 rounded hover:bg-red-900 transform hover:-translate-y-0.5 transition duration-250">
                             Delete
                         </button>
                     </div>
 
                     <!-- Edit User Story -->
-                    {#if story.isEditing}
-                    <div class="mt-4 text-center">
-                        <input 
-                            type="text" 
-                            bind:value={story.tempTitle} 
-                            placeholder="New Title" 
-                            class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
-                        />
-                        <textarea 
-                            bind:value={story.tempDescription} 
-                            placeholder="New Description" 
-                            class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-1 px-3 mb-2"
-                        ></textarea>
-                        <button 
-                            onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
-                            class="bg-[#348449] text-white py-1 px-3 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
-                        >
-                            Save Changes
-                        </button>
-                    </div>
+                {#if story.isEditing}
+                  <div class="mt-4 text-center">
+                      <input 
+                          type="text" 
+                          bind:value={story.tempTitle} 
+                          placeholder="New Title" 
+                          class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
+                      />
+                      <textarea 
+                          bind:value={story.tempDescription} 
+                          placeholder="New Description" 
+                          class="w-full bg-gray-50 rounded border border-gray-300 focus:ring-2 focus:ring-[#8DDDA9] text-base outline-none text-gray-700 py-2 px-3 mb-2 sm:text-sm"
+                      ></textarea>
+                      <button 
+                          onclick={() => modifyUserStory(story.id, story.tempTitle, story.tempDescription)} 
+                          class="bg-[#348449] text-white py-1 px-3 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
+                      >
+                          Save Changes
+                      </button>
+                      </div>
                     {/if}
+
                     <button 
                         onclick={() => getStoryId(story.id)}
                         class="mt-3 w-full bg-[#348449] text-white py-2 px-4 rounded hover:bg-[#1F6838] transform hover:-translate-y-0.5 transition duration-250"
@@ -345,11 +348,14 @@
                         Select
                     </button>
                     <button 
+
                         onclick={() => exportToCSV(story)} 
                         class="px-4 py-2 bg-white text-[rgb(51,51,51)] rounded hover:bg-[#348449] hover:text-white transform hover:-translate-y-0.5 transition duration-250 w-full mt-3 border border-black"
+
                         >
                             Export to CSV
                     </button>
+
 
                     {#if voteHistory && voteHistory.find(h => h.storyId === story.id)}
                         <div class="mt-4 p-4 bg-gray-100 rounded shadow">
@@ -367,6 +373,7 @@
                             {/each}
                         </div>
                     {/if}
+
                 </div>
             {/each}
         </div>

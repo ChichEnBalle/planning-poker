@@ -7,6 +7,7 @@ let voteCallback = null;
 let showVotesCallback = null;
 let userStoriesCallback = null; 
 let usersCallback = null;
+let endVotingCallback = null;
 
 export const connectWebSocket = (username, room) => {
     client = new Client({
@@ -52,6 +53,15 @@ export const connectWebSocket = (username, room) => {
                 if (usersCallback) {
                     usersCallback(users);
                 }
+            });
+
+            client.subscribe(`/topic/endVoting/${room}`, message => {
+                const data = JSON.parse(message.body);
+                console.log('Received endVoting message:', data);
+                if (endVotingCallback) {
+                    endVotingCallback(data);
+                }
+
             });
         },
         onStompError: (error) => {
@@ -148,6 +158,11 @@ export const listenForUsers = (callback) => {
     usersCallback = callback;
 };
 
+export const listenForEndVoting = (callback) =>{
+    console.log('Setting up endVoting callback');
+    endVotingCallback = callback;
+};
+
 export const addUserStory = (userStory, room) => {
     // @ts-ignore
     if (client && client.connected) {
@@ -198,14 +213,7 @@ export function sendEndVoting(room, storyId, votes) {
     }
 }
 
-export function listenForEndVoting(room, callback) {
-    client.subscribe(`/topic/endVoting/${room}`, message => {
-        const data = JSON.parse(message.body);
-        if (data.type === "endVoting") {
-            callback(data);
-        }
-    });
-}
+
 
 
 export const updateUserStory = (userStory, room) => {
