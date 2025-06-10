@@ -3,9 +3,10 @@ import { Client } from '@stomp/stompjs';
 // @ts-ignore
 let client = null;
 // @ts-ignore
-let voteCallback = null; // Fonction de callback pour l'écoute des messages
+let voteCallback = null; 
 let showVotesCallback = null;
-let userStoriesCallback = null; // Fonction de callback pour l'écoute des messages
+let userStoriesCallback = null; 
+let usersCallback = null;
 
 export const connectWebSocket = (username, room) => {
     client = new Client({
@@ -41,6 +42,15 @@ export const connectWebSocket = (username, room) => {
                 console.log('Received showVotes message:', data);
                 if (showVotesCallback) {
                     showVotesCallback(data);
+                }
+            });
+
+            
+            client.subscribe(`/topic/users/${room}`, (message) => {
+                const users = JSON.parse(message.body);
+                console.log('Received users message:', users);
+                if (usersCallback) {
+                    usersCallback(users);
                 }
             });
         },
@@ -133,6 +143,11 @@ export const listenForShowVotes = (callback) => {
     showVotesCallback = callback;
 };
 
+export const listenForUsers = (callback) => {
+    console.log('Setting up users callback');
+    usersCallback = callback;
+};
+
 export const addUserStory = (userStory, room) => {
     // @ts-ignore
     if (client && client.connected) {
@@ -150,13 +165,7 @@ export const addUserStory = (userStory, room) => {
     }
 };
 
-export function listenForUsers(room, callback) {
-    if (!client) return;
-    client.subscribe(`/topic/users/${room}`, message => {
-        const users = JSON.parse(message.body);
-        callback(users);
-    });
-}
+
 
 export const deleteUserStory = (story, room) => {
     // @ts-ignore

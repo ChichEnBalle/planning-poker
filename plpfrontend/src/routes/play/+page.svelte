@@ -66,7 +66,7 @@
                 users = await res.json();
             }
 
-            listenForUsers(room, (newUsers) => {
+            listenForUsers( (newUsers) => {
                 users = newUsers;
             });
         }
