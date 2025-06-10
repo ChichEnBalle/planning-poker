@@ -21,14 +21,15 @@
     let hasJoined = false;
 
     let userStoriesRef;
+    let allVoted = false;
     let showHistory = false;
     let voteHistory: { storyId: number; votes: { userId: number; value: string }[] }[] = [];
 
-    let votesForStory = votes.filter(v => v.storyId === storyId);
-    let usersLeftToVote = users.length > 0 && storyId !== -1
+    $: votesForStory = votes.filter(v => v.storyId === storyId);
+    $: usersLeftToVote = users.length > 0 && storyId !== -1
         ? users.filter(u => !votesForStory.some(v => v.userId === u.id)).length
         : 0;
-    let allVoted = users.length > 0 && storyId !== -1 && usersLeftToVote === 0;
+    $: allVoted = users.length > 0 && storyId !== -1 && usersLeftToVote === 0;
 
     let showVotes = false;
     let adminId: number | null = null; 
