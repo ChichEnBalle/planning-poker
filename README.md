@@ -51,24 +51,31 @@ docker-compose up -d db
 By default, the configuration is:
 - **Host:** localhost
 - **Port:** 5432
-- **Database:** planningpoker
-- **User:** pokeruser
-- **Password:** pokerpass
+- **Database:** mydatabase
+- **User:** fquinaou
+- **Password:** C0ntr4s3n4
 
 Make sure your backend configuration matches these credentials (usually set in `src/main/resources/application.properties`):
 
 ```
-spring.datasource.url=jdbc:postgresql://localhost:5432/planningpoker
-spring.datasource.username=pokeruser
-spring.datasource.password=pokerpass
+spring.application.name=PLPBackend
+#spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+ 
+spring.datasource.url=jdbc:postgresql://localhost:5432/mydatabase
+spring.datasource.username=fquinaou
+spring.datasource.password=C0ntr4s3n4
+
+server.address=0.0.0.0
 ```
 
 ### 3. Backend Setup
 
-1. Navigate to the backend directory (e.g., `backend/`):
+1. Navigate to the backend directory (e.g., `PLPBackend/`):
 
     ```bash
-    cd backend
+    cd PLPBackend
     ```
 
 2. Run the backend with Maven and Spring Boot:
@@ -79,10 +86,10 @@ spring.datasource.password=pokerpass
 
 ### 4. Frontend Setup
 
-1. Navigate to the frontend directory (e.g., `frontend/`):
+1. Navigate to the frontend directory (e.g., `plpfrontend/`):
 
     ```bash
-    cd frontend
+    cd plpfrontend
     ```
 
 2. Install dependencies:
